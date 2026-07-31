@@ -1,7 +1,3 @@
-/**
- * Specification Loader — reads and parses application.json.
- * Performs structural JSON Schema validation using AJV.
- */
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,7 +6,6 @@ import Ajv from 'ajv';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load JSON Schema
 const schemaPath = resolve(__dirname, '../../../schemas/application.schema.json');
 
 export interface LoadResult {
@@ -19,8 +14,8 @@ export interface LoadResult {
 }
 
 /**
- * Load application.json from the given path.
- * Returns the parsed object + any schema validation errors.
+ * @author arefin
+ * @description Load and parse the application specification from disk into the intermediate representation
  */
 export function loadSpecification(specPath: string): LoadResult {
   const absolutePath = resolve(process.cwd(), specPath);

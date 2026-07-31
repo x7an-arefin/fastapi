@@ -1,7 +1,3 @@
-/**
- * Template Engine — wraps EJS rendering with the normalized IR.
- * All templates receive consistent context; no template reads raw JSON.
- */
 import ejs from 'ejs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,15 +12,15 @@ const TEMPLATES_DIR = resolve(__dirname, '../../../templates');
 
 export interface RenderContext {
   ir: ApplicationIR;
-  /** The current entity being rendered (if applicable) */
   entity?: EntityIR;
-  /** The current operation being rendered (if applicable) */
   operation?: OperationIR;
-  /** Extra data specific to the template */
   extra?: Record<string, unknown>;
 }
 
-// Interop helper for ejs.render across ESM/CJS
+/**
+ * @author arefin
+ * @description Render an EJS template string with the provided context variables and return the output
+ */
 function ejsRender(template: string, data: ejs.Data, options: ejs.Options): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderFn = (ejs as any).render ?? (ejs as any).default?.render;
@@ -35,8 +31,8 @@ function ejsRender(template: string, data: ejs.Data, options: ejs.Options): stri
 }
 
 /**
- * Render an EJS template by relative path from the templates/ directory.
- * The context always includes the full IR + naming utilities.
+ * @author arefin
+ * @description Render a template file with the provided context variables
  */
 export function renderTemplate(templateRelPath: string, ctx: RenderContext): string {
   const templatePath = resolve(TEMPLATES_DIR, templateRelPath);
@@ -64,7 +60,8 @@ export function renderTemplate(templateRelPath: string, ctx: RenderContext): str
 }
 
 /**
- * Render an EJS template from a string (for inline templates).
+ * @author arefin
+ * @description Render an inline template string with the provided context variables
  */
 export function renderString(template: string, ctx: RenderContext): string {
   const ejsContext = {

@@ -1,7 +1,3 @@
-/**
- * Resource Budget Compiler — static analysis of per-endpoint platform operation costs.
- * Generation FAILS if any endpoint exceeds the declared budget policy.
- */
 import type { CrudOperation } from '../naming/index.js';
 import type { OperationBudgetIR, OperationIR, ApplicationIR } from '../ir/types.js';
 
@@ -9,7 +5,8 @@ import type { OperationBudgetIR, OperationIR, ApplicationIR } from '../ir/types.
 type RawOpConfig = Record<string, any>;
 
 /**
- * Estimate platform operations for a single CRUD endpoint.
+ * @author arefin
+ * @description Compute resource usage budget for a single entity based on its fields and operations
  */
 export function computeBudget(
   operation: CrudOperation,
@@ -23,36 +20,35 @@ export function computeBudget(
   let queueWrites = 0;
   let b2Operations = 0;
 
-  // Session check: always 1 KV read if auth is required
   if (auth) {
     kvReads += 1;
   }
 
   switch (operation) {
     case 'create':
-      dbQueries += 1; // INSERT
-      if (config['idempotency']) dbQueries += 1; // idempotency record check
-      queueWrites += 1; // domain event to queue
+      dbQueries += 1;
+      if (config['idempotency']) dbQueries += 1;
+      queueWrites += 1;
       break;
 
     case 'get':
-      dbQueries += 1; // SELECT by ID
+      dbQueries += 1;
       break;
 
     case 'list':
-      dbQueries += 1; // SELECT with filters/pagination
+      dbQueries += 1;
       break;
 
     case 'update':
-      dbQueries += 1; // SELECT for optimistic lock check
-      dbQueries += 1; // UPDATE
-      queueWrites += 1; // domain event
+      dbQueries += 1;
+      dbQueries += 1;
+      queueWrites += 1;
       break;
 
     case 'delete':
-      dbQueries += 1; // SELECT (verify ownership)
-      dbQueries += 1; // UPDATE (soft delete) or DELETE (hard delete)
-      queueWrites += 1; // domain event
+      dbQueries += 1;
+      dbQueries += 1;
+      queueWrites += 1;
       break;
   }
 
@@ -85,8 +81,8 @@ export interface BudgetRow {
 }
 
 /**
- * Validate all operations against the declared budget policy.
- * Returns a report with any violations.
+ * @author arefin
+ * @description Validate all entity resource budgets against defined limits and constraints
  */
 export function validateBudgets(ir: ApplicationIR): BudgetReport {
   const violations: BudgetViolation[] = [];
@@ -154,7 +150,16 @@ export function validateBudgets(ir: ApplicationIR): BudgetReport {
   return { violations, rows, summary };
 }
 
+/**
+ * @author arefin
+ * @description Format the budget validation report into a human-readable summary string
+ */
 function formatBudgetReport(rows: BudgetRow[], violations: BudgetViolation[]): string {
+
+  /**
+   * @author arefin
+   * @description Generate a formatted table column string with padding for budget report display
+   */
   const col = (s: string, width: number) => s.padEnd(width).slice(0, width);
   const lines: string[] = [
     '',

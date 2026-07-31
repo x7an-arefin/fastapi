@@ -1,12 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-/**
- * Email Consumer — processes email jobs from the email queue.
- * Calls Resend API only from here — never from HTTP handlers directly.
- *
- * This ensures email provider latency never impacts user response times.
- */
 import type { Env } from '../generated/bindings.js';
 import { logger } from '../core/observability/logger.js';
 
@@ -19,6 +10,10 @@ export interface EmailJob {
   correlationId: string;
 }
 
+/**
+ * @author arefin
+ * @description Process email queue messages and send emails via the configured provider
+ */
 export async function emailConsumer(
   batch: MessageBatch<EmailJob>,
   env: Env,
@@ -28,7 +23,7 @@ export async function emailConsumer(
     const job = message.body;
 
     try {
-      // Call Resend API
+
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {

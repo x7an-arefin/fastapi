@@ -1,9 +1,7 @@
 /**
- * Naming utilities — ALL name transformations for generated code go through here.
- * No template or generator may do ad-hoc string manipulation.
+ * @author arefin
+ * @description Convert a string to kebab-case format
  */
-
-/** kebab-case: "myEntity" → "my-entity" */
 export function toKebabCase(input: string): string {
   return input
     .replace(/([a-z])([A-Z])/g, '$1-$2')
@@ -12,7 +10,10 @@ export function toKebabCase(input: string): string {
     .toLowerCase();
 }
 
-/** snake_case: "myEntity" → "my_entity" */
+/**
+ * @author arefin
+ * @description Convert a string to snake_case format
+ */
 export function toSnakeCase(input: string): string {
   return input
     .replace(/([a-z])([A-Z])/g, '$1_$2')
@@ -21,25 +22,37 @@ export function toSnakeCase(input: string): string {
     .toLowerCase();
 }
 
-/** PascalCase: "my-entity" → "MyEntity" */
+/**
+ * @author arefin
+ * @description Convert a string to PascalCase format
+ */
 export function toPascalCase(input: string): string {
   return input
     .replace(/[-_\s]+(.)/g, (_, char: string) => char.toUpperCase())
     .replace(/^(.)/, (_, char: string) => char.toUpperCase());
 }
 
-/** camelCase: "my-entity" → "myEntity" */
+/**
+ * @author arefin
+ * @description Convert a string to camelCase format
+ */
 export function toCamelCase(input: string): string {
   const pascal = toPascalCase(input);
   return pascal.charAt(0).toLowerCase() + pascal.slice(1);
 }
 
-/** SCREAMING_SNAKE: "myEntity" → "MY_ENTITY" */
+/**
+ * @author arefin
+ * @description Convert a string to SCREAMING_SNAKE_CASE format
+ */
 export function toScreamingSnakeCase(input: string): string {
   return toSnakeCase(input).toUpperCase();
 }
 
-/** pluralize — simple English pluralization */
+/**
+ * @author arefin
+ * @description Return the plural form of an English word
+ */
 export function pluralize(word: string): string {
   if (word.endsWith('y') && !/[aeiou]y$/i.test(word)) {
     return word.slice(0, -1) + 'ies';
@@ -50,7 +63,10 @@ export function pluralize(word: string): string {
   return word + 's';
 }
 
-/** singularize — simple English singularization */
+/**
+ * @author arefin
+ * @description Return the singular form of an English word
+ */
 export function singularize(word: string): string {
   if (word.endsWith('ies')) {
     return word.slice(0, -3) + 'y';
@@ -64,10 +80,9 @@ export function singularize(word: string): string {
   return word;
 }
 
-// ── Domain event names ────────────────────────────────────────────────────────
-
 /**
- * Lifecycle hook event name: commerce.product.create.pre.v1
+ * @author arefin
+ * @description Generate the lifecycle event name for a given entity and operation
  */
 export function toLifecycleEventName(
   domain: string,
@@ -80,7 +95,8 @@ export function toLifecycleEventName(
 }
 
 /**
- * Domain fact event name (past tense): commerce.product.created.v1
+ * @author arefin
+ * @description Generate the domain event name for a given entity and past-tense operation
  */
 export function toDomainEventName(
   domain: string,
@@ -92,7 +108,10 @@ export function toDomainEventName(
   return `${domain}.${toKebabCase(entity)}.${pastTense}.v${version}`;
 }
 
-/** Convert operation to past tense for domain facts */
+/**
+ * @author arefin
+ * @description Convert a CRUD operation verb to its past tense form
+ */
 export function toPastTense(operation: CrudOperation): string {
   const map: Record<CrudOperation, string> = {
     create: 'created',
@@ -104,46 +123,61 @@ export function toPastTense(operation: CrudOperation): string {
   return map[operation];
 }
 
-// ── File/directory names ──────────────────────────────────────────────────────
-
-/** src/modules/product/create/create-product.route.ts */
+/**
+ * @author arefin
+ * @description Generate the filename for a lifecycle endpoint file
+ */
 export function toEndpointFilename(operation: CrudOperation, entityName: string, suffix: string): string {
   return `${operation}-${toKebabCase(entityName)}.${suffix}.ts`;
 }
 
-/** src/modules/product → module directory path segment */
+/**
+ * @author arefin
+ * @description Generate the module directory path for a given entity
+ */
 export function toModulePath(entityName: string): string {
   return `src/modules/${toKebabCase(entityName)}`;
 }
 
-/** src/modules/product/create */
+/**
+ * @author arefin
+ * @description Generate the file path for a specific entity operation
+ */
 export function toOperationPath(entityName: string, operation: CrudOperation): string {
   return `${toModulePath(entityName)}/${operation}`;
 }
 
-// ── Type names ────────────────────────────────────────────────────────────────
-
-/** ProductEntity */
+/**
+ * @author arefin
+ * @description Generate the TypeScript type name for an entity
+ */
 export function toEntityTypeName(entityName: string): string {
   return `${toPascalCase(entityName)}Entity`;
 }
 
-/** CreateProductInput */
+/**
+ * @author arefin
+ * @description Generate the TypeScript input DTO type name for an entity operation
+ */
 export function toInputTypeName(operation: CrudOperation, entityName: string): string {
   return `${toPascalCase(operation)}${toPascalCase(entityName)}Input`;
 }
 
-/** CreateProductOutput */
+/**
+ * @author arefin
+ * @description Generate the TypeScript output DTO type name for an entity operation
+ */
 export function toOutputTypeName(operation: CrudOperation, entityName: string): string {
   return `${toPascalCase(operation)}${toPascalCase(entityName)}Output`;
 }
 
-/** ProductRepository */
+/**
+ * @author arefin
+ * @description Generate the TypeScript repository interface type name for an entity
+ */
 export function toRepositoryTypeName(entityName: string): string {
   return `${toPascalCase(entityName)}Repository`;
 }
-
-// ── Types used in naming ──────────────────────────────────────────────────────
 
 export type CrudOperation = 'create' | 'get' | 'list' | 'update' | 'delete';
 export type LifecycleStage = 'pre' | 'process' | 'post';

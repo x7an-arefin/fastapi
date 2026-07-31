@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: User | Operation: LIST — Output Schema ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import { z } from 'zod';
 
 const UserBaseSchema = z.object({
@@ -13,12 +9,10 @@ const UserBaseSchema = z.object({
 
 });
 
-
 export const ListUserOutputSchema = z.object({
   items: z.array(UserBaseSchema),
   nextCursor: z.string().nullable(),
   hasMore: z.boolean(),
 });
-
 
 export type ListUserOutput = z.infer<typeof ListUserOutputSchema>;

@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: User                                                   ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import {
   pgTable,
   uuid,
@@ -20,7 +16,6 @@ import {
 import { relations } from 'drizzle-orm';
 
 export const roleEnum = pgEnum('users_role', ['user', 'admin']);
-
 
 export const userTable = pgTable(
   'users',

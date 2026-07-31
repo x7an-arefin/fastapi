@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  SCAFFOLDED FILE — This file was created by the generator once.     ║
-// ║  It will NOT be overwritten on subsequent generator runs.           ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { pre } from './list-task.pre.js';
 import { process } from './list-task.process.js';
@@ -9,6 +5,10 @@ import { post } from './list-task.post.js';
 import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
 import type { Env } from '../../../generated/bindings.js';
 
+/**
+ * @author arefin
+ * @description Test suite for the makeCtx functionality
+ */
 function makeCtx(overrides: Partial<LifecycleContext> = {}): LifecycleContext {
   return {
     correlationId: 'test-correlation-id',
@@ -26,7 +26,6 @@ function makeCtx(overrides: Partial<LifecycleContext> = {}): LifecycleContext {
 }
 
 describe('Task — LIST lifecycle', () => {
-  // ── PRE ────────────────────────────────────────────────────────────────────
 
   describe('pre()', () => {
 
@@ -37,15 +36,11 @@ describe('Task — LIST lifecycle', () => {
 
   });
 
-  // ── PROCESS ────────────────────────────────────────────────────────────────
-
   describe('process()', () => {
     it('should return data', async () => {
       expect(true).toBe(true);
     });
   });
-
-  // ── POST ───────────────────────────────────────────────────────────────────
 
   describe('post()', () => {
 
@@ -56,12 +51,20 @@ describe('Task — LIST lifecycle', () => {
 
   });
 
-  // ── Lifecycle ordering ─────────────────────────────────────────────────────
-
   describe('lifecycle ordering', () => {
     it('PRE must complete before PROCESS runs', async () => {
       const callOrder: string[] = [];
+
+      /**
+       * @author arefin
+       * @description Test suite for the trackedPre functionality
+       */
       const trackedPre = async (ctx: LifecycleContext) => { callOrder.push('pre'); return pre(ctx); };
+
+      /**
+       * @author arefin
+       * @description Test suite for the trackedProcess functionality
+       */
       const trackedProcess = async (ctx: LifecycleContext) => { callOrder.push('process'); return process(ctx); };
 
       expect(callOrder.indexOf('pre')).toBeLessThan(callOrder.indexOf('process') === -1 ? Infinity : callOrder.indexOf('process'));

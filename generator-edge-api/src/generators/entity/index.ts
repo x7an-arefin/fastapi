@@ -1,7 +1,3 @@
-/**
- * Entity sub-generator — generates per-entity files:
- * schema.ts, types.ts, repository.ts, events.ts
- */
 import Generator from 'yeoman-generator';
 import { renderTemplate } from '../../lib/template-engine/index.js';
 import type { ApplicationIR, EntityIR } from '../../lib/ir/types.js';
@@ -14,11 +10,19 @@ export default class EntityGenerator extends Generator {
   private ir!: ApplicationIR;
   private targetEntities!: EntityIR[];
 
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(args: string | string[], opts: AnyOpts) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super(args as string[], opts as any);
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman initializing phase — display banner, parse options, and load/validate the specification
+   */
   initializing(): void {
     const opts = this.options as AnyOpts;
     this.ir = opts['ir'] as ApplicationIR;
@@ -33,6 +37,10 @@ export default class EntityGenerator extends Generator {
     }
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman writing phase — begin code generation or print dry-run plan
+   */
   writing(): void {
     this.log(chalk.blue(`\n🗂  Generating entities: ${this.targetEntities.map((e) => e.namePascal).join(', ')}\n`));
 
@@ -49,6 +57,10 @@ export default class EntityGenerator extends Generator {
     }
   }
 
+  /**
+   * @author arefin
+   * @description Write a generated file from a template — always overwrites existing content
+   */
   private _writeGenerated(templatePath: string, outputPath: string, ctx: object): void {
     const content = renderTemplate(templatePath, ctx as Parameters<typeof renderTemplate>[1]);
     this.fs.write(this.destinationPath(outputPath), content);

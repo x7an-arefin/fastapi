@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: Task                                                   ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import {
   pgTable,
   uuid,
@@ -20,7 +16,6 @@ import {
 import { relations } from 'drizzle-orm';
 
 export const statusEnum = pgEnum('tasks_status', ['todo', 'in_progress', 'completed', 'archived']);
-
 
 export const taskTable = pgTable(
   'tasks',

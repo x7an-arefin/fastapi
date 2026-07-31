@@ -1,7 +1,3 @@
-/**
- * Manifest — tracks generated files, generator version, and spec hash.
- * Written to the generated project root as manifest.json.
- */
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
@@ -10,7 +6,6 @@ export const GENERATOR_VERSION = '1.0.0';
 export interface ManifestEntry {
   file: string;
   owner: 'generated' | 'scaffolded' | 'managed';
-  /** SHA-256 hash of the file content at generation time */
   hash: string;
   generatedAt: string;
 }
@@ -22,15 +17,27 @@ export interface Manifest {
   files: ManifestEntry[];
 }
 
+/**
+ * @author arefin
+ * @description Compute a content hash of the specification file for change detection
+ */
 export function hashSpecification(specPath: string): string {
   const content = readFileSync(specPath, 'utf-8');
   return 'sha256:' + createHash('sha256').update(content).digest('hex');
 }
 
+/**
+ * @author arefin
+ * @description Compute a SHA-256 hash of a string content for integrity verification
+ */
 export function hashContent(content: string): string {
   return 'sha256:' + createHash('sha256').update(content).digest('hex');
 }
 
+/**
+ * @author arefin
+ * @description Build the generation manifest with file entries, hashes, and metadata
+ */
 export function buildManifest(specPath: string, entries: ManifestEntry[]): Manifest {
   return {
     generatorVersion: GENERATOR_VERSION,
@@ -40,6 +47,10 @@ export function buildManifest(specPath: string, entries: ManifestEntry[]): Manif
   };
 }
 
+/**
+ * @author arefin
+ * @description Generate the file header comment block for generated source files
+ */
 export function generatedFileHeader(entityName: string, operation: string): string {
   return [
     '// ╔══════════════════════════════════════════════════════════════════════╗',
@@ -53,6 +64,10 @@ export function generatedFileHeader(entityName: string, operation: string): stri
   ].join('\n');
 }
 
+/**
+ * @author arefin
+ * @description Generate the file header comment block for scaffolded (user-editable) source files
+ */
 export function scaffoldedFileHeader(): string {
   return [
     '// ╔══════════════════════════════════════════════════════════════════════╗',

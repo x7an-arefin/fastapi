@@ -1,23 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-/**
- * Media routes — Backblaze B2 presigned URL upload flow.
- *
- * Upload Flow:
- *   1. Client: POST /api/v1/media/upload-url { filename, mimeType, entityType, entityId }
- *   2. Worker: Validates auth + mime type + size policy
- *   3. Worker: Generates B2 presigned upload URL (S3-compatible API)
- *   4. Worker: Returns { uploadUrl, objectKey, publicUrl }
- *   5. Client: PUT {uploadUrl} with file bytes (bypasses Worker entirely)
- *   6. Client: POST /api/v1/media/complete { objectKey, entityType, entityId }
- *   7. Worker: Verifies object exists + links to entity
- *
- * RULES:
- *   - The Worker NEVER receives or buffers file bytes
- *   - All media delivery uses Cloudflare CDN (zero egress cost via Bandwidth Alliance)
- *   - Long-term Cache-Control headers are set on public URLs
- */
 import type { Context } from 'hono';
 import type { Env } from '../../generated/bindings.js';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
@@ -29,8 +9,12 @@ import { logger } from '../../core/observability/logger.js';
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg","image/png","application/pdf"]);
 const MAX_BYTES = 5242880;
 const PUBLIC_BASE_URL = 'https://media.example.com';
-const URL_EXPIRY_SECONDS = 300; // 5 minutes
+const URL_EXPIRY_SECONDS = 300;
 
+/**
+ * @author arefin
+ * @description Initialize and return an S3 client configured with R2-compatible credentials from the environment
+ */
 function getS3Client(env: Env): S3Client {
   const e = env as unknown as Record<string, string>;
   return new S3Client({
@@ -44,8 +28,8 @@ function getS3Client(env: Env): S3Client {
 }
 
 /**
- * POST /api/v1/media/upload-url
- * Generate a presigned URL for direct B2 upload.
+ * @author arefin
+ * @description Handle the incoming HTTP request — orchestrates input validation, business logic, and response formatting
  */
 export async function uploadUrlRoute(c: Context<{ Bindings: Env }>): Promise<Response> {
   const correlationId = c.req.header('x-correlation-id') ?? crypto.randomUUID();
@@ -89,8 +73,8 @@ export async function uploadUrlRoute(c: Context<{ Bindings: Env }>): Promise<Res
 }
 
 /**
- * POST /api/v1/media/complete
- * Verify the upload succeeded and link to entity.
+ * @author arefin
+ * @description Handle the incoming HTTP request — orchestrates input validation, business logic, and response formatting
  */
 export async function completeUploadRoute(c: Context<{ Bindings: Env }>): Promise<Response> {
   const correlationId = c.req.header('x-correlation-id') ?? crypto.randomUUID();
@@ -100,9 +84,6 @@ export async function completeUploadRoute(c: Context<{ Bindings: Env }>): Promis
 
   const body = await c.req.json() as { objectKey: string; entityType: string; entityId: string };
   const { objectKey, entityType, entityId } = body;
-
-  // TODO: Verify object exists in B2 and belongs to the authenticated user
-  // TODO: Update entity record with the media URL
 
   const publicUrl = `${PUBLIC_BASE_URL}/${objectKey}`;
 

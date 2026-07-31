@@ -1,21 +1,24 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: Task                                                   ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { eq, and, gt, desc, asc } from 'drizzle-orm';
 import type { TaskEntity, NewTask, UpdateTask, ITaskRepository, ListTaskParams, ListTaskResult } from './task.types.js';
 import { taskTable } from './task.schema.js';
 import { AppError } from '../../core/errors/application-error.js';
 
-
 export class TaskRepository implements ITaskRepository {
   private readonly db: ReturnType<typeof drizzle>;
 
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(hyperdrive: Hyperdrive) {
     this.db = drizzle(hyperdrive.connectionString, { logger: false });
   }
 
+  /**
+   * @author arefin
+   * @description Find a single task entity by its unique identifier
+   */
   async findById(id: string): Promise<TaskEntity | null> {
     const rows = await this.db
       .select()
@@ -29,10 +32,13 @@ export class TaskRepository implements ITaskRepository {
     return rows[0] ?? null;
   }
 
+  /**
+   * @author arefin
+   * @description Retrieve a paginated list of task entities with optional filters
+   */
   async findAll(params: ListTaskParams): Promise<ListTaskResult> {
     const limit = Math.min(params.limit ?? 20, 100);
     const conditions = [];
-
 
     if (params.status) {
       conditions.push(eq(taskTable.status, params.status as any));
@@ -60,6 +66,10 @@ export class TaskRepository implements ITaskRepository {
     return { items, nextCursor: nextCursor as string | null, hasMore };
   }
 
+  /**
+   * @author arefin
+   * @description Insert a new task entity into the database and return the created record
+   */
   async create(data: NewTask): Promise<TaskEntity> {
     const rows = await this.db
       .insert(taskTable)
@@ -70,6 +80,10 @@ export class TaskRepository implements ITaskRepository {
     return row;
   }
 
+  /**
+   * @author arefin
+   * @description Update an existing task entity and return the modified record
+   */
   async update(data: UpdateTask): Promise<TaskEntity | null> {
     const { id, ...rest } = data;
 
@@ -83,6 +97,10 @@ export class TaskRepository implements ITaskRepository {
     return rows[0] ?? null;
   }
 
+  /**
+   * @author arefin
+   * @description Delete a task entity by its unique identifier and return whether the operation succeeded
+   */
   async delete(id: string): Promise<boolean> {
 
     const rows = await this.db

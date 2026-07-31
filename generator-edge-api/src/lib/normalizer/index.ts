@@ -1,8 +1,3 @@
-/**
- * Normalizer — converts raw application.json into the stable Intermediate Representation (IR).
- * This is the single source of truth transformation. All defaults are applied here.
- * All name variants are computed here. All derived properties are calculated here.
- */
 import type {
   ApplicationIR,
   ApplicationMetaIR,
@@ -44,8 +39,10 @@ import { computeBudget } from '../resource-budget/index.js';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawSpec = Record<string, any>;
 
-// ── Drizzle column type mapping ───────────────────────────────────────────────
-
+/**
+ * @author arefin
+ * @description Convert a normalized field definition to a Drizzle ORM column type with appropriate constraints
+ */
 function toDrizzleColumn(field: RawSpec, fieldName: string): string {
   const type = field['type'] as FieldType;
   const snakeName = toSnakeCase(fieldName);
@@ -101,8 +98,10 @@ function toDrizzleColumn(field: RawSpec, fieldName: string): string {
   }
 }
 
-// ── Field normalization ───────────────────────────────────────────────────────
-
+/**
+ * @author arefin
+ * @description Normalize a single field definition from raw spec format to the intermediate representation
+ */
 function normalizeField(fieldName: string, raw: RawSpec, entityName: string, entities: RawSpec): FieldIR {
   const type = raw['type'] as FieldType;
   const generated = raw['generated'] as boolean | 'createdAt' | 'updatedAt' | undefined;
@@ -144,8 +143,6 @@ function normalizeField(fieldName: string, raw: RawSpec, entityName: string, ent
   };
 }
 
-// ── Operation normalization ───────────────────────────────────────────────────
-
 const HTTP_METHODS: Record<CrudOperation, string> = {
   create: 'POST',
   get: 'GET',
@@ -154,6 +151,10 @@ const HTTP_METHODS: Record<CrudOperation, string> = {
   delete: 'DELETE',
 };
 
+/**
+ * @author arefin
+ * @description Normalize a single CRUD operation from raw spec format to the intermediate representation with defaults
+ */
 function normalizeOperation(
   operation: CrudOperation,
   raw: RawSpec,
@@ -173,13 +174,11 @@ function normalizeOperation(
   const permissions = (raw['permissions'] as string[] | undefined) ?? [];
   const delivery = (raw['delivery'] as 'best-effort' | 'transactional-outbox' | undefined) ?? 'best-effort';
 
-  // Select fields
   const selectFieldNames = raw['select'] as string[] | undefined;
   const selectFields = selectFieldNames
     ? fields.filter((f) => selectFieldNames.includes(f.name))
     : fields.filter((f) => !f.nullable || f.primary);
 
-  // Lifecycle
   const rawLifecycle = raw['lifecycle'] as { pre?: string[]; process?: string[]; post?: string[] } | undefined;
   const lifecycle = {
     pre: rawLifecycle?.pre ?? getDefaultPreHooks(operation, auth),
@@ -187,7 +186,6 @@ function normalizeOperation(
     post: rawLifecycle?.post ?? getDefaultPostHooks(operation, entityName),
   };
 
-  // Event names
   const domainEventName = toDomainEventName(domain, entityName, operation, eventVersion);
   const lifecycleEventNames = {
     pre: toLifecycleEventName(domain, entityName, operation, 'pre', eventVersion),
@@ -195,10 +193,8 @@ function normalizeOperation(
     post: toLifecycleEventName(domain, entityName, operation, 'post', eventVersion),
   };
 
-  // Operation-specific config
   const config = buildOperationConfig(operation, raw);
 
-  // Budget estimate
   const budget = computeBudget(operation, auth, config, raw);
 
   return {
@@ -218,6 +214,10 @@ function normalizeOperation(
   };
 }
 
+/**
+ * @author arefin
+ * @description Build the default API route path for a given entity and operation
+ */
 function buildDefaultPath(
   operation: CrudOperation,
   entityName: string,
@@ -228,6 +228,10 @@ function buildDefaultPath(
   return { relative, full: apiPrefix + relative };
 }
 
+/**
+ * @author arefin
+ * @description Get the default pre-lifecycle hooks for a given operation type
+ */
 function getDefaultPreHooks(operation: CrudOperation, auth: boolean): string[] {
   const hooks: string[] = [];
   if (auth) {
@@ -239,11 +243,19 @@ function getDefaultPreHooks(operation: CrudOperation, auth: boolean): string[] {
   return hooks;
 }
 
+/**
+ * @author arefin
+ * @description Get the default post-lifecycle hooks for a given operation type
+ */
 function getDefaultPostHooks(operation: CrudOperation, entityName: string): string[] {
   if (operation === 'get' || operation === 'list') return [];
   return [`publish${toPascalCase(entityName)}${toPascalCase(operation)}d`, 'queueAuditEvent'];
 }
 
+/**
+ * @author arefin
+ * @description Build the complete operation configuration with defaults, hooks, and path settings
+ */
 function buildOperationConfig(operation: CrudOperation, raw: RawSpec): OperationIR['config'] {
   switch (operation) {
     case 'create':
@@ -292,8 +304,10 @@ function buildOperationConfig(operation: CrudOperation, raw: RawSpec): Operation
   }
 }
 
-// ── Entity normalization ──────────────────────────────────────────────────────
-
+/**
+ * @author arefin
+ * @description Normalize a single entity from raw spec format to the fully-resolved intermediate representation
+ */
 function normalizeEntity(
   entityName: string,
   raw: RawSpec,
@@ -319,7 +333,6 @@ function normalizeEntity(
     unique: (idx['unique'] as boolean | undefined) ?? false,
   }));
 
-  // Parse CRUD operations
   const rawCrud = raw['crud'] as Record<string, RawSpec> | undefined;
   const operations: OperationIR[] = [];
   const crudOrder: CrudOperation[] = ['create', 'get', 'list', 'update', 'delete'];
@@ -358,8 +371,10 @@ function normalizeEntity(
   };
 }
 
-// ── Main normalize function ───────────────────────────────────────────────────
-
+/**
+ * @author arefin
+ * @description Normalize raw specification input into a fully-resolved application intermediate representation
+ */
 export function normalizeSpecification(raw: RawSpec): ApplicationIR {
   const app = raw['application'] as RawSpec;
   const db = raw['database'] as RawSpec;
@@ -373,7 +388,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
   const obs = (raw['observability'] as RawSpec | undefined) ?? {};
   const budgetsRaw = (raw['budgets'] as RawSpec | undefined) ?? {};
 
-  // Application meta
   const application: ApplicationMetaIR = {
     name: app['name'] as string,
     domain: app['domain'] as string,
@@ -386,7 +400,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
     nameCamel: toCamelCase(app['name'] as string),
   };
 
-  // Database
   const database: DatabaseIR = {
     provider: db['provider'] as 'cockroachdb' | 'postgresql',
     connection: 'hyperdrive',
@@ -395,7 +408,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
     migrations: (db['migrations'] as boolean | undefined) ?? true,
   };
 
-  // Authentication
   const authentication: AuthenticationIR | null = auth
     ? {
         provider: 'better-auth',
@@ -408,7 +420,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
       }
     : null;
 
-  // Events
   const eventsConfig = events ?? {};
   const eventsIR: EventsIR = {
     version: (eventsConfig['version'] as number | undefined) ?? 1,
@@ -419,7 +430,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
     includeActor: (eventsConfig['includeActor'] as boolean | undefined) ?? true,
   };
 
-  // Sort entities by dependency order
   const depNodes = extractEntityDependencies(rawEntities);
   const sortedEntityNames = topologicalSort(depNodes);
 
@@ -427,7 +437,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
     normalizeEntity(name, rawEntities[name]!, application.apiPrefix, application.domain, eventsIR.version, rawEntities)
   );
 
-  // Storage
   const storageIR: StorageIR | null = storage
     ? {
         provider: 'backblaze-b2',
@@ -439,12 +448,10 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
       }
     : null;
 
-  // Email
   const emailIR: EmailIR | null = email
     ? { provider: 'resend', execution: 'queue-only' }
     : null;
 
-  // Webhooks
   const webhookIRs: WebhookIR[] = Object.entries(webhooks).map(([name, wh]) => ({
     name,
     namePascal: toPascalCase(name),
@@ -455,7 +462,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
     responseStatus: (wh['responseStatus'] as number | undefined) ?? 202,
   }));
 
-  // Scheduled jobs
   const scheduledIRs: ScheduledJobIR[] = Object.entries(scheduled).map(([name, job]) => ({
     name,
     nameKebab: toKebabCase(name),
@@ -464,7 +470,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
     description: (job['description'] as string | undefined) ?? '',
   }));
 
-  // Observability
   const observability: ObservabilityIR = {
     correlationHeader: (obs['correlationHeader'] as string | undefined) ?? 'x-correlation-id',
     structuredLogs: (obs['structuredLogs'] as boolean | undefined) ?? true,
@@ -473,7 +478,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
     profile: (obs['profile'] as 'free' | 'paid-logpush' | undefined) ?? 'free',
   };
 
-  // Budgets
   const budgetReq = (budgetsRaw['request'] as RawSpec | undefined) ?? {};
   const budgets: BudgetPolicyIR = {
     request: {

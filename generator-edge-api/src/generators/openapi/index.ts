@@ -1,7 +1,3 @@
-/**
- * OpenAPI sub-generator — generates openapi.json from the normalized IR.
- * Produces a valid OpenAPI 3.1 document.
- */
 import Generator from 'yeoman-generator';
 import type { ApplicationIR, EntityIR, OperationIR, FieldIR } from '../../lib/ir/types.js';
 import chalk from 'chalk';
@@ -12,16 +8,28 @@ type AnyOpts = Record<string, any>;
 export default class OpenApiGenerator extends Generator {
   private ir!: ApplicationIR;
 
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(args: string | string[], opts: AnyOpts) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super(args as string[], opts as any);
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman initializing phase — display banner, parse options, and load/validate the specification
+   */
   initializing(): void {
     const opts = this.options as AnyOpts;
     this.ir = opts['ir'] as ApplicationIR;
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman writing phase — begin code generation or print dry-run plan
+   */
   writing(): void {
     this.log(chalk.blue('\n📄 Generating OpenAPI 3.1 document...\n'));
     const doc = this._buildDocument();
@@ -29,18 +37,21 @@ export default class OpenApiGenerator extends Generator {
     this.log(chalk.green('  ✅ openapi.json written\n'));
   }
 
+  /**
+   * @author arefin
+   * @description Build the complete OpenAPI 3.1 document from the normalized application IR
+   */
   private _buildDocument(): object {
     const ir = this.ir;
     const paths: Record<string, object> = {};
     const schemas: Record<string, object> = {};
 
     for (const entity of ir.entities) {
-      // Build schema components
+
       schemas[entity.namePascal] = this._buildEntitySchema(entity);
       schemas[`New${entity.namePascal}`] = this._buildCreateSchema(entity);
       schemas[`Update${entity.namePascal}`] = this._buildUpdateSchema(entity);
 
-      // Build paths
       for (const op of entity.operations) {
         const pathKey = op.fullPath.replace(/:(\w+)/g, '{$1}');
         if (!paths[pathKey]) paths[pathKey] = {};
@@ -48,7 +59,6 @@ export default class OpenApiGenerator extends Generator {
       }
     }
 
-    // Media paths
     if (ir.storage) {
       paths[`${ir.application.apiPrefix}/media/upload-url`] = {
         post: {
@@ -98,6 +108,10 @@ export default class OpenApiGenerator extends Generator {
     };
   }
 
+  /**
+   * @author arefin
+   * @description Build the OpenAPI schema definition for a single entity
+   */
   private _buildEntitySchema(entity: EntityIR): object {
     const properties: Record<string, object> = {};
     const required: string[] = [];
@@ -110,6 +124,10 @@ export default class OpenApiGenerator extends Generator {
     return { type: 'object', required, properties };
   }
 
+  /**
+   * @author arefin
+   * @description Build the OpenAPI request body schema for the create operation of an entity
+   */
   private _buildCreateSchema(entity: EntityIR): object {
     const properties: Record<string, object> = {};
     const required: string[] = [];
@@ -123,6 +141,10 @@ export default class OpenApiGenerator extends Generator {
     return { type: 'object', required, properties };
   }
 
+  /**
+   * @author arefin
+   * @description Build the OpenAPI request body schema for the update operation of an entity (all fields optional)
+   */
   private _buildUpdateSchema(entity: EntityIR): object {
     const properties: Record<string, object> = {};
     const updateFields = entity.fields.filter((f) => !f.primary && f.generated === false);
@@ -134,6 +156,10 @@ export default class OpenApiGenerator extends Generator {
     return { type: 'object', minProperties: 1, properties };
   }
 
+  /**
+   * @author arefin
+   * @description Convert an entity field definition to its corresponding JSON Schema representation
+   */
   private _fieldToJsonSchema(field: FieldIR): object {
     switch (field.type) {
       case 'uuid': return { type: 'string', format: 'uuid' };
@@ -150,6 +176,10 @@ export default class OpenApiGenerator extends Generator {
     }
   }
 
+  /**
+   * @author arefin
+   * @description Build the OpenAPI path operation object for a single entity CRUD operation
+   */
   private _buildOperation(entity: EntityIR, op: OperationIR): object {
     const tags = [entity.namePascal];
     const security = op.auth ? [{ bearerAuth: [] }] : [];

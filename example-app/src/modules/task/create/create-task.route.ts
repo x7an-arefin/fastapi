@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: Task | Operation: CREATE                        ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import type { Context } from 'hono';
 import type { Env } from '../../../generated/bindings.js';
 import { runLifecycle } from '../../../core/lifecycle/run-lifecycle.js';
@@ -14,12 +10,15 @@ import { TaskRepository } from '../task.repository.js';
 import { logger } from '../../../core/observability/logger.js';
 import { AppError } from '../../../core/errors/application-error.js';
 
+/**
+ * @author arefin
+ * @description Handle the HTTP request to create a Task — orchestrates input validation, lifecycle execution, and response formatting
+ */
 export async function createTaskRoute(c: Context<{ Bindings: Env }>): Promise<Response> {
   const correlationId = c.req.header('x-correlation-id') ?? crypto.randomUUID();
   const startTime = Date.now();
 
   try {
-    // Parse and validate input
 
     const rawBody = await c.req.json().catch(() => ({}));
     const inputResult = CreateTaskInputSchema.safeParse(rawBody);
@@ -33,8 +32,6 @@ export async function createTaskRoute(c: Context<{ Bindings: Env }>): Promise<Re
     }
     const input = inputResult.data;
 
-
-    // Build lifecycle context
     const ctx: LifecycleContext = {
       correlationId,
       env: c.env,
@@ -48,10 +45,8 @@ export async function createTaskRoute(c: Context<{ Bindings: Env }>): Promise<Re
       },
     };
 
-    // Execute lifecycle: PRE → PROCESS → POST
     const result = await runLifecycle(ctx, { pre, process, post });
 
-    // Return response
     const statusCode = 201;
 
     c.header('x-correlation-id', correlationId);

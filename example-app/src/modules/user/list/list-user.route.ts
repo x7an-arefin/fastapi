@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: User | Operation: LIST                        ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import type { Context } from 'hono';
 import type { Env } from '../../../generated/bindings.js';
 import { runLifecycle } from '../../../core/lifecycle/run-lifecycle.js';
@@ -14,12 +10,15 @@ import { UserRepository } from '../user.repository.js';
 import { logger } from '../../../core/observability/logger.js';
 import { AppError } from '../../../core/errors/application-error.js';
 
+/**
+ * @author arefin
+ * @description Handle the HTTP request to list a User — orchestrates input validation, lifecycle execution, and response formatting
+ */
 export async function listUserRoute(c: Context<{ Bindings: Env }>): Promise<Response> {
   const correlationId = c.req.header('x-correlation-id') ?? crypto.randomUUID();
   const startTime = Date.now();
 
   try {
-    // Parse and validate input
 
     const query = c.req.query();
     const inputResult = ListUserInputSchema.safeParse(query);
@@ -33,8 +32,6 @@ export async function listUserRoute(c: Context<{ Bindings: Env }>): Promise<Resp
     }
     const input = inputResult.data;
 
-
-    // Build lifecycle context
     const ctx: LifecycleContext = {
       correlationId,
       env: c.env,
@@ -48,10 +45,8 @@ export async function listUserRoute(c: Context<{ Bindings: Env }>): Promise<Resp
       },
     };
 
-    // Execute lifecycle: PRE → PROCESS → POST
     const result = await runLifecycle(ctx, { pre, process, post });
 
-    // Return response
     const statusCode = 200;
 
     c.header('x-correlation-id', correlationId);

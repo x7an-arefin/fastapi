@@ -1,16 +1,4 @@
 #!/usr/bin/env node
-/**
- * CLI entry point for edge-api generator commands.
- * Dispatches to the appropriate Yeoman sub-generator.
- *
- * Usage:
- *   yo edge-api --spec application.json            # Full generation
- *   yo edge-api:validate --spec application.json   # Validate spec only
- *   yo edge-api:plan --spec application.json       # Dry-run plan
- *   yo edge-api:entity product                     # Single entity
- *   yo edge-api:openapi                            # OpenAPI only
- *   yo edge-api:doctor                             # Health check
- */
 import { createEnv } from 'yeoman-environment';
 
 const args = process.argv.slice(2);
@@ -18,6 +6,10 @@ const command = args[0] ?? 'generate';
 const specFlag = args.includes('--spec') ? args[args.indexOf('--spec') + 1] : 'application.json';
 const dryRun = args.includes('--dry-run') || args.includes('-d');
 
+/**
+ * @author arefin
+ * @description CLI entry point — parse arguments and dispatch to the appropriate command handler
+ */
 async function main(): Promise<void> {
   const env = createEnv();
 
@@ -38,6 +30,11 @@ async function main(): Promise<void> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+/**
+ * @author arefin
+ * @description Load and validate the application specification against semantic rules
+ */
 async function runValidate(env: any, specPath: string): Promise<void> {
   const { loadSpecification } = await import('./lib/specification-loader/index.js');
   const { validateSemantics } = await import('./lib/semantic-validator/index.js');
@@ -75,6 +72,11 @@ async function runValidate(env: any, specPath: string): Promise<void> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+/**
+ * @author arefin
+ * @description Execute the full code generation pipeline from the application specification
+ */
 async function runGenerate(env: any, specPath: string, dryRun: boolean): Promise<void> {
   const AppGenerator = (await import('./generators/app/index.js')).default;
   env.registerStub(AppGenerator, 'edge-api:app');

@@ -1,8 +1,3 @@
-/**
- * Semantic Validator — validates business rules beyond JSON Schema.
- * Cross-references, naming conflicts, circular dependencies, budget violations.
- */
-
 export interface SemanticError {
   path: string;
   message: string;
@@ -12,6 +7,10 @@ export interface SemanticError {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawSpec = Record<string, any>;
 
+/**
+ * @author arefin
+ * @description Validate semantic correctness of the raw specification — check for missing references and invalid configurations
+ */
 export function validateSemantics(raw: RawSpec): SemanticError[] {
   const errors: SemanticError[] = [];
   const entities = raw['entities'] as Record<string, RawSpec> | undefined;
@@ -24,7 +23,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
     const fields = entity['fields'] as Record<string, RawSpec> | undefined;
     if (!fields) continue;
 
-    // Validate entity name format
     if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(entityName)) {
       errors.push({
         path: `entities.${entityName}`,
@@ -33,7 +31,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
       });
     }
 
-    // Validate field references
     for (const [fieldName, field] of Object.entries(fields)) {
       const ref = field['references'] as { entity: string; field: string } | undefined;
       if (ref) {
@@ -56,7 +53,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
         }
       }
 
-      // Validate enum fields have values
       if (field['type'] === 'enum' && (!field['values'] || (field['values'] as string[]).length === 0)) {
         errors.push({
           path: `entities.${entityName}.fields.${fieldName}.values`,
@@ -65,7 +61,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
         });
       }
 
-      // Validate decimal precision/scale
       if (field['type'] === 'decimal') {
         if (field['precision'] && field['scale'] && (field['scale'] as number) > (field['precision'] as number)) {
           errors.push({
@@ -77,7 +72,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
       }
     }
 
-    // Validate primary key exists
     const hasPrimary = Object.values(fields).some((f) => f['primary'] === true);
     if (!hasPrimary) {
       errors.push({
@@ -87,7 +81,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
       });
     }
 
-    // Validate crud select fields exist
     const crud = entity['crud'] as Record<string, RawSpec> | undefined;
     if (crud) {
       for (const [opName, op] of Object.entries(crud)) {
@@ -104,7 +97,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
           }
         }
 
-        // Validate sort/filter fields on list operations
         if (opName === 'list') {
           const filterFields = op['filter'] as string[] | undefined;
           if (filterFields) {
@@ -134,7 +126,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
       }
     }
 
-    // Validate index fields exist
     const indexes = entity['indexes'] as RawSpec[] | undefined;
     if (indexes) {
       for (const index of indexes) {
@@ -154,7 +145,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
     }
   }
 
-  // Validate webhook queue bindings declared in events
   const webhooks = raw['webhooks'] as Record<string, RawSpec> | undefined;
   if (webhooks) {
     for (const [webhookName, webhook] of Object.entries(webhooks)) {
@@ -168,7 +158,6 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
     }
   }
 
-  // Validate auth session KV binding exists if auth configured
   const auth = raw['authentication'] as RawSpec | undefined;
   if (auth?.['session']?.['cache'] === 'workers-kv' && !auth['session']['kvBinding']) {
     errors.push({

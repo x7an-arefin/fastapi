@@ -1,17 +1,10 @@
-/**
- * Merge Engine — structured merging for managed files (wrangler.jsonc, package.json).
- * Uses deep-merge strategies; never does raw string replacement.
- */
-
-// ── Deep merge ────────────────────────────────────────────────────────────────
-
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
 type JsonObject = { [key: string]: JsonValue };
 type JsonArray = JsonValue[];
 
 /**
- * Deep merge two objects. The patch takes priority.
- * Arrays are merged by concatenating unique primitive values.
+ * @author arefin
+ * @description Deep merge two JSON objects — patch values override base values recursively
  */
 export function deepMerge(base: JsonObject, patch: JsonObject): JsonObject {
   const result: JsonObject = { ...base };
@@ -31,24 +24,30 @@ export function deepMerge(base: JsonObject, patch: JsonObject): JsonObject {
   return result;
 }
 
+/**
+ * @author arefin
+ * @description Check whether a value is a plain JSON object (not array or null)
+ */
 function isObject(value: unknown): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * @author arefin
+ * @description Merge two JSON arrays by concatenating and deduplicating entries
+ */
 function mergeArrays(base: JsonArray, patch: JsonArray): JsonArray {
   const result = [...base];
   for (const item of patch) {
     if (typeof item !== 'object' && !result.includes(item)) {
       result.push(item);
     } else if (typeof item === 'object') {
-      // For objects in arrays, always add (can't safely dedupe by content)
+
       result.push(item);
     }
   }
   return result;
 }
-
-// ── package.json merging ──────────────────────────────────────────────────────
 
 export interface PackageJsonDeps {
   dependencies?: Record<string, string>;
@@ -57,9 +56,8 @@ export interface PackageJsonDeps {
 }
 
 /**
- * Merge generated package.json additions into an existing one.
- * Existing scripts/deps from the developer are preserved.
- * Generator-added entries are added without overwriting manual ones.
+ * @author arefin
+ * @description Merge generated dependency declarations into an existing package.json structure
  */
 export function mergePackageJson(existing: JsonObject, generated: PackageJsonDeps): JsonObject {
   const result = { ...existing };
@@ -68,7 +66,7 @@ export function mergePackageJson(existing: JsonObject, generated: PackageJsonDep
     const existingDeps = (result['dependencies'] as Record<string, string> | undefined) ?? {};
     result['dependencies'] = {
       ...generated.dependencies,
-      ...existingDeps, // developer-set versions win
+      ...existingDeps,
     };
   }
 
@@ -91,8 +89,6 @@ export function mergePackageJson(existing: JsonObject, generated: PackageJsonDep
   return result;
 }
 
-// ── wrangler.jsonc merging ────────────────────────────────────────────────────
-
 export interface WranglerAdditions {
   kv_namespaces?: JsonObject[];
   queues?: { producers?: JsonObject[]; consumers?: JsonObject[] };
@@ -103,7 +99,8 @@ export interface WranglerAdditions {
 }
 
 /**
- * Merge generated wrangler additions into existing wrangler.jsonc content.
+ * @author arefin
+ * @description Merge generated Wrangler additions into an existing wrangler.toml configuration
  */
 export function mergeWranglerConfig(existing: JsonObject, additions: WranglerAdditions): JsonObject {
   let result = { ...existing };

@@ -1,13 +1,10 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import type { Context } from 'hono';
 import { AppError } from './application-error.js';
 import { logger } from '../observability/logger.js';
 
 /**
- * Global Hono error handler — converts all thrown errors to structured JSON responses.
- * Internal details are never exposed to the client.
+ * @author arefin
+ * @description Global error handler that catches application errors and formats them into consistent HTTP responses
  */
 export function errorHandler(err: Error, c: Context): Response {
   const correlationId = c.req.header('x-correlation-id') ?? 'unknown';
@@ -34,7 +31,6 @@ export function errorHandler(err: Error, c: Context): Response {
     );
   }
 
-  // Unknown error — never expose internals
   logger.error({
     correlationId,
     error: String(err),
