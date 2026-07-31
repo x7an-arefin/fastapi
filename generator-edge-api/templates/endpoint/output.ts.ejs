@@ -1,0 +1,36 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
+// ║  Entity: <%= entity.namePascal %> | Operation: <%= operation.operation.toUpperCase() %> — Output Schema ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+import { z } from 'zod';
+
+const <%= entity.namePascal %>BaseSchema = z.object({
+<%operation.selectFields.forEach(function(field) {
+  let zodType = '';
+  switch (field.type) {
+    case 'string': case 'text': case 'uuid': zodType = 'z.string()'; break;
+    case 'integer': zodType = 'z.number().int()'; break;
+    case 'bigint': zodType = 'z.bigint()'; break;
+    case 'decimal': zodType = 'z.string()'; break;
+    case 'boolean': zodType = 'z.boolean()'; break;
+    case 'timestamp': zodType = 'z.date()'; break;
+    case 'enum': zodType = `z.enum([${field.enumValues.map(v => `'${v}'`).join(', ')}])`; break;
+    case 'json': zodType = 'z.record(z.unknown())'; break;
+    default: zodType = 'z.unknown()';
+  }
+  if (field.nullable) zodType += '.nullable()';
+%>  <%= field.nameCamel %>: <%- zodType %>,
+<%});%>
+});
+
+<%if (operation.operation === 'list') {%>
+export const <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>OutputSchema = z.object({
+  items: z.array(<%= entity.namePascal %>BaseSchema),
+  nextCursor: z.string().nullable(),
+  hasMore: z.boolean(),
+});
+<%} else {%>
+export const <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>OutputSchema = <%= entity.namePascal %>BaseSchema;
+<%}%>
+
+export type <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>Output = z.infer<typeof <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>OutputSchema>;

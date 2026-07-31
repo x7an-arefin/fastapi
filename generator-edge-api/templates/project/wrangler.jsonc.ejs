@@ -1,0 +1,56 @@
+/**
+ * Wrangler configuration for <%= app.name %>
+ * Managed file — updated by the generator via structured merge.
+ */
+{
+  "name": "<%= app.nameKebab %>",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "hyperdrive": [
+    {
+      "binding": "<%= db.binding %>",
+      "id": "YOUR_HYPERDRIVE_ID_HERE"
+    }
+  ]<%if (auth && auth.session.cache === 'workers-kv') {%>,
+
+  "kv_namespaces": [
+    {
+      "binding": "<%= auth.session.kvBinding %>",
+      "id": "YOUR_KV_NAMESPACE_ID_HERE"
+    }
+  ]<%}%><%if (events.queueBinding) {%>,
+
+  "queues": {
+    "producers": [
+      {
+        "binding": "<%= events.queueBinding %>",
+        "queue": "<%= app.nameKebab %>-domain-events"
+      }<%if (events.deadLetterQueueBinding) {%>,
+      {
+        "binding": "<%= events.deadLetterQueueBinding %>",
+        "queue": "<%= app.nameKebab %>-domain-events-dlq"
+      }<%}%>
+    ],
+    "consumers": [
+      {
+        "queue": "<%= app.nameKebab %>-domain-events",
+        "max_batch_size": 100,
+        "max_batch_timeout": 5,
+        "max_retries": 3,
+        "dead_letter_queue": "<%= app.nameKebab %>-domain-events-dlq"
+      }
+    ]
+  }<%}%><%if (ir.scheduled.length > 0) {%>,
+
+  "triggers": {
+    "crons": [<%ir.scheduled.forEach(function(job, i) {%>
+      "<%= job.cron %>"<%if (i < ir.scheduled.length - 1) {%>,<%}%><%});%>
+    ]
+  }<%}%>,
+
+  "vars": {
+    "ENVIRONMENT": "development"
+  }
+}

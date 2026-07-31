@@ -1,0 +1,109 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
+// ║  Entity: <%= entity.namePascal %>                                                   ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { eq, and, gt, desc, asc<%if (entity.hasSoftDelete && entity.fields.some(f => f.nameCamel === 'deletedAt')){%>, isNull<%}%> } from 'drizzle-orm';
+import type { <%= entity.namePascal %>Entity, New<%= entity.namePascal %>, Update<%= entity.namePascal %>, I<%= entity.namePascal %>Repository, List<%= entity.namePascal %>Params, List<%= entity.namePascal %>Result } from './<%= entity.nameKebab %>.types.js';
+import { <%= entity.nameCamel %>Table } from './<%= entity.nameKebab %>.schema.js';
+import { AppError } from '../../core/errors/application-error.js';
+
+<%
+const hasDeletedAt = entity.fields.some(f => f.nameCamel === 'deletedAt');
+%>
+export class <%= entity.namePascal %>Repository implements I<%= entity.namePascal %>Repository {
+  private readonly db: ReturnType<typeof drizzle>;
+
+  constructor(hyperdrive: Hyperdrive) {
+    this.db = drizzle(hyperdrive.connectionString, { logger: false });
+  }
+
+  async findById(id: string): Promise<<%= entity.namePascal %>Entity | null> {
+    const rows = await this.db
+      .select()
+      .from(<%= entity.nameCamel %>Table)
+      .where(
+        and(
+          eq(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, id)<%if (entity.hasSoftDelete && hasDeletedAt) {%>,
+          isNull(<%= entity.nameCamel %>Table.deletedAt)<%}%>
+        )
+      )
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  async findAll(params: List<%= entity.namePascal %>Params): Promise<List<%= entity.namePascal %>Result> {
+    const limit = Math.min(params.limit ?? 20, 100);
+    const conditions = [];
+<%if (entity.hasSoftDelete && hasDeletedAt) {%>
+    conditions.push(isNull(<%= entity.nameCamel %>Table.deletedAt));
+<%}%>
+<%entity.operations.filter(op => op.operation === 'list').forEach(function(op) {
+  if (op.config.filterFields) {
+    op.config.filterFields.forEach(function(f) {%>
+    if (params.<%= naming.toCamelCase(f) %>) {
+      conditions.push(eq(<%= entity.nameCamel %>Table.<%= naming.toCamelCase(f) %>, params.<%= naming.toCamelCase(f) %> as any));
+    }
+<%  });
+  }
+});%>
+    if (params.cursor) {
+      conditions.push(gt(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, params.cursor));
+    }
+
+    const rows = await this.db
+      .select()
+      .from(<%= entity.nameCamel %>Table)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>))
+      .limit(limit + 1);
+
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+    const nextCursor = hasMore ? ((items[items.length - 1] as Record<string, unknown>)?.['<%= entity.primaryKey.nameCamel %>'] as string ?? null) : null;
+
+    return { items, nextCursor: nextCursor as string | null, hasMore };
+  }
+
+  async create(data: New<%= entity.namePascal %>): Promise<<%= entity.namePascal %>Entity> {
+    const rows = await this.db
+      .insert(<%= entity.nameCamel %>Table)
+      .values(data as any)
+      .returning();
+    const row = rows[0];
+    if (!row) throw new AppError('DB_INSERT_FAILED', `Failed to insert <%= entity.name %>`, 500);
+    return row;
+  }
+
+  async update(data: Update<%= entity.namePascal %>): Promise<<%= entity.namePascal %>Entity | null> {
+    const { <%= entity.primaryKey.nameCamel %>, ...rest } = data;
+<%if (entity.hasOptimisticConcurrency) {%>
+    const updateData = { ...rest, updatedAt: new Date() };
+<%} else {%>
+    const updateData = rest;
+<%}%>
+    const rows = await this.db
+      .update(<%= entity.nameCamel %>Table)
+      .set(updateData as any)
+      .where(eq(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, id))
+      .returning();
+    return rows[0] ?? null;
+  }
+
+  async delete(id: string): Promise<boolean> {
+<%if (entity.hasSoftDelete && hasDeletedAt) {%>
+    const rows = await this.db
+      .update(<%= entity.nameCamel %>Table)
+      .set({ deletedAt: new Date() } as Partial<<%= entity.namePascal %>Entity>)
+      .where(eq(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, id))
+      .returning();
+    return rows.length > 0;
+<%} else {%>
+    const rows = await this.db
+      .delete(<%= entity.nameCamel %>Table)
+      .where(eq(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, id))
+      .returning();
+    return rows.length > 0;
+<%}%>
+  }
+}

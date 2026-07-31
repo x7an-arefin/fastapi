@@ -1,0 +1,53 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+import type { Context } from 'hono';
+import { AppError } from './application-error.js';
+import { logger } from '../observability/logger.js';
+
+/**
+ * Global Hono error handler — converts all thrown errors to structured JSON responses.
+ * Internal details are never exposed to the client.
+ */
+export function errorHandler(err: Error, c: Context): Response {
+  const correlationId = c.req.header('<%= observability.correlationHeader %>') ?? 'unknown';
+
+  if (err instanceof AppError) {
+    if (err.statusCode >= 500) {
+      logger.error({
+        correlationId,
+        code: err.code,
+        message: err.message,
+        stack: err.stack,
+      });
+    } else {
+      logger.warn({ correlationId, code: err.code, message: err.message });
+    }
+
+    return c.json(
+      {
+        error: err.code,
+        message: err.message,
+        correlationId,
+      },
+      err.statusCode as 400 | 401 | 403 | 404 | 409 | 422 | 500
+    );
+  }
+
+  // Unknown error — never expose internals
+  logger.error({
+    correlationId,
+    error: String(err),
+    stack: err.stack,
+    message: 'Unhandled error',
+  });
+
+  return c.json(
+    {
+      error: 'INTERNAL_ERROR',
+      message: 'An unexpected error occurred',
+      correlationId,
+    },
+    500
+  );
+}

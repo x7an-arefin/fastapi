@@ -1,0 +1,41 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+/**
+ * Structured logger — outputs JSON to console for Cloudflare Logpush.
+ *
+ * Profile: <%= observability.profile %>
+ * <%if (observability.profile === 'free') {%>FREE tier: structured console output only.
+ * Use `wrangler tail` for real-time log streaming.<%} else {%>PAID tier: structured output for Logpush → <%= observability.provider %>.<%}%>
+ *
+ * RULES:
+ *   - DO NOT make HTTP fetch() calls to logging services inside API handlers
+ *   - Use Cloudflare Logpush for async telemetry (paid plan)
+ *   - Correlation IDs must be included in every log entry
+ */
+
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogRecord = Record<string, unknown>;
+
+function log(level: LogLevel, data: LogRecord): void {
+  const entry = JSON.stringify({
+    level,
+    timestamp: new Date().toISOString(),
+    service: '<%= app.name %>',
+    ...data,
+  });
+
+  switch (level) {
+    case 'debug': console.debug(entry); break;
+    case 'info': console.log(entry); break;
+    case 'warn': console.warn(entry); break;
+    case 'error': console.error(entry); break;
+  }
+}
+
+export const logger = {
+  debug: (data: LogRecord) => log('debug', data),
+  info: (data: LogRecord) => log('info', data),
+  warn: (data: LogRecord) => log('warn', data),
+  error: (data: LogRecord) => log('error', data),
+};

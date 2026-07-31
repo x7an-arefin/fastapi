@@ -1,0 +1,103 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
+// ║  Entity: <%= entity.namePascal %> | Operation: <%= operation.operation.toUpperCase() %>                        ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+import type { Context } from 'hono';
+import type { Env } from '../../../generated/bindings.js';
+import { runLifecycle } from '../../../core/lifecycle/run-lifecycle.js';
+import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
+import { <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>InputSchema } from './<%= operation.operation %>-<%= entity.nameKebab %>.input.js';
+import { pre } from './<%= operation.operation %>-<%= entity.nameKebab %>.pre.js';
+import { process } from './<%= operation.operation %>-<%= entity.nameKebab %>.process.js';
+import { post } from './<%= operation.operation %>-<%= entity.nameKebab %>.post.js';
+import { <%= entity.namePascal %>Repository } from '../<%= entity.nameKebab %>.repository.js';
+import { logger } from '../../../core/observability/logger.js';
+import { AppError } from '../../../core/errors/application-error.js';
+
+export async function <%= naming.toCamelCase(operation.operation) %><%= entity.namePascal %>Route(c: Context<{ Bindings: Env }>): Promise<Response> {
+  const correlationId = c.req.header('<%= observability.correlationHeader %>') ?? crypto.randomUUID();
+  const startTime = Date.now();
+
+  try {
+    // Parse and validate input
+<%if (operation.operation === 'create' || operation.operation === 'update') {%>
+    const rawBody = await c.req.json().catch(() => ({}));
+    const inputResult = <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>InputSchema.safeParse(rawBody);
+    if (!inputResult.success) {
+      return c.json({
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid request body',
+        details: inputResult.error.flatten().fieldErrors,
+        correlationId,
+      }, 422);
+    }
+    const input = inputResult.data;
+<%} else if (operation.operation === 'get' || operation.operation === 'delete') {%>
+    const id = c.req.param('id');
+    if (!id) {
+      return c.json({ error: 'MISSING_PARAM', message: 'id is required', correlationId }, 400);
+    }
+    const input = { id };
+<%} else if (operation.operation === 'list') {%>
+    const query = c.req.query();
+    const inputResult = <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>InputSchema.safeParse(query);
+    if (!inputResult.success) {
+      return c.json({
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid query parameters',
+        details: inputResult.error.flatten().fieldErrors,
+        correlationId,
+      }, 422);
+    }
+    const input = inputResult.data;
+<%}%>
+
+    // Build lifecycle context
+    const ctx: LifecycleContext = {
+      correlationId,
+      env: c.env,
+      request: c.req.raw,
+      input,
+      result: null,
+      meta: {
+        entity: '<%= entity.name %>',
+        operation: '<%= operation.operation %>',
+        eventName: '<%= operation.domainEventName %>',
+      },
+    };
+
+    // Execute lifecycle: PRE → PROCESS → POST
+    const result = await runLifecycle(ctx, { pre, process, post });
+
+    // Return response
+    const statusCode = <%if (operation.operation === 'create') {%>201<%} else if (operation.operation === 'delete') {%>204<%} else {%>200<%}%>;
+<%if (operation.operation === 'delete') {%>
+    return new Response(null, { status: 204 });
+<%} else {%>
+    c.header('<%= observability.correlationHeader %>', correlationId);
+    return c.json({ data: result.output, correlationId }, statusCode);
+<%}%>
+  } catch (err) {
+    if (err instanceof AppError) {
+      logger.error({ correlationId, code: err.code, message: err.message });
+      return c.json({
+        error: err.code,
+        message: err.message,
+        correlationId,
+      }, err.statusCode as 400 | 401 | 403 | 404 | 409 | 422 | 500);
+    }
+    logger.error({ correlationId, error: String(err), stack: err instanceof Error ? err.stack : undefined });
+    return c.json({
+      error: 'INTERNAL_ERROR',
+      message: 'An unexpected error occurred',
+      correlationId,
+    }, 500);
+  } finally {
+    logger.info({
+      correlationId,
+      method: '<%= operation.method %>',
+      path: '<%= operation.fullPath %>',
+      duration: Date.now() - startTime,
+    });
+  }
+}

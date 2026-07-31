@@ -1,0 +1,181 @@
+/**
+ * OpenAPI sub-generator — generates openapi.json from the normalized IR.
+ * Produces a valid OpenAPI 3.1 document.
+ */
+import Generator from 'yeoman-generator';
+import type { ApplicationIR, EntityIR, OperationIR, FieldIR } from '../../lib/ir/types.js';
+import chalk from 'chalk';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyOpts = Record<string, any>;
+
+export default class OpenApiGenerator extends Generator {
+  private ir!: ApplicationIR;
+
+  constructor(args: string | string[], opts: AnyOpts) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    super(args as string[], opts as any);
+  }
+
+  initializing(): void {
+    const opts = this.options as AnyOpts;
+    this.ir = opts['ir'] as ApplicationIR;
+  }
+
+  writing(): void {
+    this.log(chalk.blue('\n📄 Generating OpenAPI 3.1 document...\n'));
+    const doc = this._buildDocument();
+    this.fs.write(this.destinationPath('openapi.json'), JSON.stringify(doc, null, 2));
+    this.log(chalk.green('  ✅ openapi.json written\n'));
+  }
+
+  private _buildDocument(): object {
+    const ir = this.ir;
+    const paths: Record<string, object> = {};
+    const schemas: Record<string, object> = {};
+
+    for (const entity of ir.entities) {
+      // Build schema components
+      schemas[entity.namePascal] = this._buildEntitySchema(entity);
+      schemas[`New${entity.namePascal}`] = this._buildCreateSchema(entity);
+      schemas[`Update${entity.namePascal}`] = this._buildUpdateSchema(entity);
+
+      // Build paths
+      for (const op of entity.operations) {
+        const pathKey = op.fullPath.replace(/:(\w+)/g, '{$1}');
+        if (!paths[pathKey]) paths[pathKey] = {};
+        (paths[pathKey] as Record<string, object>)[op.method.toLowerCase()] = this._buildOperation(entity, op);
+      }
+    }
+
+    // Media paths
+    if (ir.storage) {
+      paths[`${ir.application.apiPrefix}/media/upload-url`] = {
+        post: {
+          operationId: 'generateUploadUrl',
+          summary: 'Generate a presigned B2 upload URL',
+          tags: ['Media'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/UploadUrlRequest' } } },
+          },
+          responses: {
+            '200': { description: 'Presigned URL generated', content: { 'application/json': { schema: { $ref: '#/components/schemas/UploadUrlResponse' } } } },
+          },
+        },
+      };
+      schemas['UploadUrlRequest'] = { type: 'object', required: ['filename', 'mimeType'], properties: { filename: { type: 'string' }, mimeType: { type: 'string' }, entityType: { type: 'string' }, entityId: { type: 'string' } } };
+      schemas['UploadUrlResponse'] = { type: 'object', properties: { uploadUrl: { type: 'string' }, objectKey: { type: 'string' }, publicUrl: { type: 'string' }, expiresIn: { type: 'number' } } };
+    }
+
+    return {
+      openapi: '3.1.0',
+      info: {
+        title: ir.application.name,
+        version: '1.0.0',
+        description: `API for ${ir.application.name} — generated from application.json`,
+      },
+      servers: [{ url: `https://your-worker.workers.dev`, description: 'Production' }],
+      paths,
+      components: {
+        schemas: {
+          ...schemas,
+          ErrorResponse: {
+            type: 'object',
+            required: ['error', 'message', 'correlationId'],
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+              correlationId: { type: 'string' },
+            },
+          },
+        },
+        securitySchemes: {
+          bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+        },
+      },
+    };
+  }
+
+  private _buildEntitySchema(entity: EntityIR): object {
+    const properties: Record<string, object> = {};
+    const required: string[] = [];
+
+    for (const field of entity.fields) {
+      properties[field.nameCamel] = this._fieldToJsonSchema(field);
+      if (!field.nullable && field.type !== 'timestamp') required.push(field.nameCamel);
+    }
+
+    return { type: 'object', required, properties };
+  }
+
+  private _buildCreateSchema(entity: EntityIR): object {
+    const properties: Record<string, object> = {};
+    const required: string[] = [];
+    const createFields = entity.fields.filter((f) => !f.primary && f.generated === false);
+
+    for (const field of createFields) {
+      properties[field.nameCamel] = this._fieldToJsonSchema(field);
+      if (field.required) required.push(field.nameCamel);
+    }
+
+    return { type: 'object', required, properties };
+  }
+
+  private _buildUpdateSchema(entity: EntityIR): object {
+    const properties: Record<string, object> = {};
+    const updateFields = entity.fields.filter((f) => !f.primary && f.generated === false);
+
+    for (const field of updateFields) {
+      properties[field.nameCamel] = this._fieldToJsonSchema(field);
+    }
+
+    return { type: 'object', minProperties: 1, properties };
+  }
+
+  private _fieldToJsonSchema(field: FieldIR): object {
+    switch (field.type) {
+      case 'uuid': return { type: 'string', format: 'uuid' };
+      case 'string': return { type: 'string', ...(field.minLength && { minLength: field.minLength }), ...(field.maxLength && { maxLength: field.maxLength }) };
+      case 'text': return { type: 'string' };
+      case 'integer': return { type: 'integer' };
+      case 'bigint': return { type: 'integer', format: 'int64' };
+      case 'decimal': return { type: 'string', pattern: '^\\d+(\\.\\d+)?$' };
+      case 'boolean': return { type: 'boolean' };
+      case 'timestamp': return { type: 'string', format: 'date-time' };
+      case 'enum': return { type: 'string', enum: field.enumValues ?? [] };
+      case 'json': return { type: 'object', additionalProperties: true };
+      default: return { type: 'string' };
+    }
+  }
+
+  private _buildOperation(entity: EntityIR, op: OperationIR): object {
+    const tags = [entity.namePascal];
+    const security = op.auth ? [{ bearerAuth: [] }] : [];
+    const operationId = `${op.operation}${entity.namePascal}`;
+
+    const responses: Record<string, object> = {
+      '4XX': { description: 'Client error', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+      '500': { description: 'Server error', content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorResponse' } } } },
+    };
+
+    switch (op.operation) {
+      case 'create':
+        responses['201'] = { description: `${entity.namePascal} created`, content: { 'application/json': { schema: { $ref: `#/components/schemas/${entity.namePascal}` } } } };
+        return { operationId, summary: `Create a ${entity.name}`, tags, security, requestBody: { required: true, content: { 'application/json': { schema: { $ref: `#/components/schemas/New${entity.namePascal}` } } } }, responses };
+      case 'get':
+        responses['200'] = { description: `${entity.namePascal} found`, content: { 'application/json': { schema: { $ref: `#/components/schemas/${entity.namePascal}` } } } };
+        return { operationId, summary: `Get a ${entity.name} by ID`, tags, security, parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string', format: 'uuid' } }], responses };
+      case 'list':
+        responses['200'] = { description: `List of ${entity.namePluralKebab}`, content: { 'application/json': { schema: { type: 'object', properties: { items: { type: 'array', items: { $ref: `#/components/schemas/${entity.namePascal}` } }, nextCursor: { type: 'string', nullable: true }, hasMore: { type: 'boolean' } } } } } };
+        return { operationId, summary: `List ${entity.namePluralKebab}`, tags, security, parameters: [{ in: 'query', name: 'cursor', schema: { type: 'string' } }, { in: 'query', name: 'limit', schema: { type: 'integer', default: 20, maximum: 100 } }], responses };
+      case 'update':
+        responses['200'] = { description: `${entity.namePascal} updated`, content: { 'application/json': { schema: { $ref: `#/components/schemas/${entity.namePascal}` } } } };
+        return { operationId, summary: `Update a ${entity.name}`, tags, security, parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string', format: 'uuid' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: `#/components/schemas/Update${entity.namePascal}` } } } }, responses };
+      case 'delete':
+        responses['204'] = { description: `${entity.namePascal} deleted` };
+        return { operationId, summary: `Delete a ${entity.name}`, tags, security, parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string', format: 'uuid' } }], responses };
+    }
+  }
+}

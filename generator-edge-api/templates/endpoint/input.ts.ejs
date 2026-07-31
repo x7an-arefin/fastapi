@@ -1,0 +1,71 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
+// ║  Entity: <%= entity.namePascal %> | Operation: <%= operation.operation.toUpperCase() %> — Input Schema  ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+import { z } from 'zod';
+
+<%if (operation.operation === 'create') {%>
+export const <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>InputSchema = z.object({
+<%entity.fields.filter(f => !f.primary && f.generated === false).forEach(function(field) {
+  let zodType = '';
+  switch (field.type) {
+    case 'string': zodType = 'z.string()'; break;
+    case 'text': zodType = 'z.string()'; break;
+    case 'integer': zodType = 'z.number().int()'; break;
+    case 'bigint': zodType = 'z.bigint()'; break;
+    case 'decimal': zodType = 'z.string().regex(/^\\d+(\\.\\d+)?$/)'; break;
+    case 'boolean': zodType = 'z.boolean()'; break;
+    case 'uuid': zodType = 'z.string().uuid()'; break;
+    case 'timestamp': zodType = 'z.string().datetime()'; break;
+    case 'enum': zodType = `z.enum([${field.enumValues.map(v => `'${v}'`).join(', ')}])`; break;
+    case 'json': zodType = 'z.record(z.unknown())'; break;
+    default: zodType = 'z.string()';
+  }
+  if (field.minLength) zodType += `.min(${field.minLength})`;
+  if (field.maxLength) zodType += `.max(${field.maxLength})`;
+  if (!field.required) zodType += '.optional()';
+  if (field.default !== undefined) zodType += `.default(${typeof field.default === 'string' ? `'${field.default}'` : field.default})`;
+%>  <%= field.nameCamel %>: <%- zodType %>,
+<%});%>
+});
+
+<%} else if (operation.operation === 'update') {%>
+export const <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>InputSchema = z.object({
+<%entity.fields.filter(f => !f.primary && f.generated === false).forEach(function(field) {
+  let zodType = '';
+  switch (field.type) {
+    case 'string': zodType = 'z.string()'; break;
+    case 'text': zodType = 'z.string()'; break;
+    case 'integer': zodType = 'z.number().int()'; break;
+    case 'decimal': zodType = 'z.string().regex(/^\\d+(\\.\\d+)?$/)'; break;
+    case 'boolean': zodType = 'z.boolean()'; break;
+    case 'uuid': zodType = 'z.string().uuid()'; break;
+    case 'timestamp': zodType = 'z.string().datetime()'; break;
+    case 'enum': zodType = `z.enum([${field.enumValues.map(v => `'${v}'`).join(', ')}])`; break;
+    case 'json': zodType = 'z.record(z.unknown())'; break;
+    default: zodType = 'z.string()';
+  }
+  if (field.minLength) zodType += `.min(${field.minLength})`;
+  if (field.maxLength) zodType += `.max(${field.maxLength})`;
+  zodType += '.optional()';
+%>  <%= field.nameCamel %>: <%- zodType %>,
+<%});%>
+}).refine(data => Object.keys(data).length > 0, {
+  message: 'At least one field must be provided for update',
+});
+
+<%} else if (operation.operation === 'get' || operation.operation === 'delete') {%>
+export const <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>InputSchema = z.object({
+  id: z.string().uuid(),
+});
+
+<%} else if (operation.operation === 'list') {%>
+export const <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>InputSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(<%= operation.config.pagination ? operation.config.pagination.maximumLimit : 100 %>).optional().default(<%= operation.config.pagination ? operation.config.pagination.defaultLimit : 20 %>),
+<%if (operation.config.filterFields) { operation.config.filterFields.forEach(function(f) {%>  <%= naming.toCamelCase(f) %>: z.string().optional(),
+<%});%><%}%>
+});
+<%}%>
+
+export type <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>Input = z.infer<typeof <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>InputSchema>;

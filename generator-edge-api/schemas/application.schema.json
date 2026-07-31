@@ -1,0 +1,340 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://edge-api.dev/schemas/application.schema.json",
+  "title": "EdgeAPI Application Specification",
+  "description": "Declarative specification for a full-feature event-driven CRUD API on Cloudflare Workers",
+  "type": "object",
+  "required": ["$schema", "specVersion", "application", "database"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "specVersion": {
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "application": {
+      "$ref": "#/definitions/ApplicationConfig"
+    },
+    "database": {
+      "$ref": "#/definitions/DatabaseConfig"
+    },
+    "authentication": {
+      "$ref": "#/definitions/AuthenticationConfig"
+    },
+    "events": {
+      "$ref": "#/definitions/EventsConfig"
+    },
+    "entities": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/EntityConfig"
+      }
+    },
+    "storage": {
+      "$ref": "#/definitions/StorageConfig"
+    },
+    "email": {
+      "$ref": "#/definitions/EmailConfig"
+    },
+    "webhooks": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/WebhookConfig"
+      }
+    },
+    "scheduled": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ScheduledConfig"
+      }
+    },
+    "observability": {
+      "$ref": "#/definitions/ObservabilityConfig"
+    },
+    "budgets": {
+      "$ref": "#/definitions/BudgetsConfig"
+    }
+  },
+  "definitions": {
+    "ApplicationConfig": {
+      "type": "object",
+      "required": ["name", "domain", "apiPrefix", "runtime", "framework", "language"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "domain": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "apiPrefix": { "type": "string", "pattern": "^/" },
+        "runtime": { "type": "string", "enum": ["cloudflare-workers"] },
+        "framework": { "type": "string", "enum": ["hono"] },
+        "language": { "type": "string", "enum": ["typescript"] }
+      }
+    },
+    "DatabaseConfig": {
+      "type": "object",
+      "required": ["provider", "connection", "orm", "binding"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string", "enum": ["cockroachdb", "postgresql"] },
+        "connection": { "type": "string", "enum": ["hyperdrive"] },
+        "orm": { "type": "string", "enum": ["drizzle"] },
+        "binding": { "type": "string" },
+        "migrations": { "type": "boolean", "default": true }
+      }
+    },
+    "AuthenticationConfig": {
+      "type": "object",
+      "required": ["provider"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string", "enum": ["better-auth"] },
+        "session": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "primaryStore": { "type": "string", "enum": ["cockroachdb"] },
+            "cache": { "type": "string", "enum": ["workers-kv"] },
+            "kvBinding": { "type": "string" },
+            "writePolicy": { "type": "string", "enum": ["auth-events-only"] }
+          }
+        }
+      }
+    },
+    "EventsConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "integer", "default": 1 },
+        "defaultPostMode": { "type": "string", "enum": ["queue", "immediate", "both"], "default": "queue" },
+        "queueBinding": { "type": "string" },
+        "deadLetterQueueBinding": { "type": "string" },
+        "includeCorrelationId": { "type": "boolean", "default": true },
+        "includeActor": { "type": "boolean", "default": true }
+      }
+    },
+    "EntityConfig": {
+      "type": "object",
+      "required": ["table", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "table": { "type": "string" },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/FieldConfig"
+          }
+        },
+        "indexes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/IndexConfig" }
+        },
+        "crud": { "$ref": "#/definitions/CrudConfig" }
+      }
+    },
+    "FieldConfig": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["uuid", "string", "text", "integer", "bigint", "decimal", "boolean", "timestamp", "enum", "json"]
+        },
+        "primary": { "type": "boolean" },
+        "generated": { "oneOf": [{ "type": "boolean" }, { "type": "string", "enum": ["createdAt", "updatedAt"] }] },
+        "required": { "type": "boolean", "default": false },
+        "unique": { "type": "boolean", "default": false },
+        "minLength": { "type": "integer" },
+        "maxLength": { "type": "integer" },
+        "precision": { "type": "integer" },
+        "scale": { "type": "integer" },
+        "default": {},
+        "values": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "references": { "$ref": "#/definitions/ReferenceConfig" }
+      }
+    },
+    "ReferenceConfig": {
+      "type": "object",
+      "required": ["entity", "field"],
+      "additionalProperties": false,
+      "properties": {
+        "entity": { "type": "string" },
+        "field": { "type": "string" }
+      }
+    },
+    "IndexConfig": {
+      "type": "object",
+      "required": ["name", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "fields": { "type": "array", "items": { "type": "string" } },
+        "unique": { "type": "boolean", "default": false }
+      }
+    },
+    "CrudConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create": { "$ref": "#/definitions/CreateEndpointConfig" },
+        "get": { "$ref": "#/definitions/GetEndpointConfig" },
+        "list": { "$ref": "#/definitions/ListEndpointConfig" },
+        "update": { "$ref": "#/definitions/UpdateEndpointConfig" },
+        "delete": { "$ref": "#/definitions/DeleteEndpointConfig" }
+      }
+    },
+    "BaseEndpointConfig": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "path": { "type": "string" },
+        "auth": { "type": "boolean", "default": false },
+        "permissions": { "type": "array", "items": { "type": "string" } },
+        "select": { "type": "array", "items": { "type": "string" } },
+        "lifecycle": { "$ref": "#/definitions/LifecycleConfig" },
+        "delivery": { "type": "string", "enum": ["best-effort", "transactional-outbox"], "default": "best-effort" }
+      }
+    },
+    "CreateEndpointConfig": {
+      "allOf": [{ "$ref": "#/definitions/BaseEndpointConfig" }],
+      "properties": {
+        "idempotency": { "type": "boolean", "default": false }
+      }
+    },
+    "GetEndpointConfig": {
+      "allOf": [{ "$ref": "#/definitions/BaseEndpointConfig" }],
+      "properties": {
+        "cache": {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string", "enum": ["http", "kv"] },
+            "maxAge": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "ListEndpointConfig": {
+      "allOf": [{ "$ref": "#/definitions/BaseEndpointConfig" }],
+      "properties": {
+        "pagination": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["cursor", "offset"] },
+            "defaultLimit": { "type": "integer", "default": 20 },
+            "maximumLimit": { "type": "integer", "default": 100 }
+          }
+        },
+        "filter": { "type": "array", "items": { "type": "string" } },
+        "sort": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "UpdateEndpointConfig": {
+      "allOf": [{ "$ref": "#/definitions/BaseEndpointConfig" }],
+      "properties": {
+        "concurrency": {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string", "enum": ["updatedAt", "version", "none"] }
+          }
+        }
+      }
+    },
+    "DeleteEndpointConfig": {
+      "allOf": [{ "$ref": "#/definitions/BaseEndpointConfig" }],
+      "properties": {
+        "mode": { "type": "string", "enum": ["soft", "hard"], "default": "soft" }
+      }
+    },
+    "LifecycleConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pre": { "type": "array", "items": { "type": "string" } },
+        "process": { "type": "array", "items": { "type": "string" } },
+        "post": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "StorageConfig": {
+      "type": "object",
+      "required": ["provider"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string", "enum": ["backblaze-b2"] },
+        "uploadMode": { "type": "string", "enum": ["presigned-url"] },
+        "publicBaseUrl": { "type": "string" },
+        "maximumUploadBytes": { "type": "integer" },
+        "allowedMimeTypes": { "type": "array", "items": { "type": "string" } },
+        "binding": { "type": "string" }
+      }
+    },
+    "EmailConfig": {
+      "type": "object",
+      "required": ["provider"],
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string", "enum": ["resend"] },
+        "execution": { "type": "string", "enum": ["queue-only"] }
+      }
+    },
+    "WebhookConfig": {
+      "type": "object",
+      "required": ["path", "signature", "queue"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" },
+        "signature": {
+          "type": "object",
+          "required": ["type", "secretBinding"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string", "enum": ["stripe", "github", "shopify", "hmac"] },
+            "secretBinding": { "type": "string" }
+          }
+        },
+        "queue": { "type": "string" },
+        "responseStatus": { "type": "integer", "default": 202 }
+      }
+    },
+    "ScheduledConfig": {
+      "type": "object",
+      "required": ["cron"],
+      "additionalProperties": false,
+      "properties": {
+        "cron": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "ObservabilityConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "correlationHeader": { "type": "string", "default": "x-correlation-id" },
+        "structuredLogs": { "type": "boolean", "default": true },
+        "provider": { "type": "string", "enum": ["new-relic", "datadog", "none"] },
+        "transport": { "type": "string", "enum": ["cloudflare-logpush", "console"] },
+        "profile": { "type": "string", "enum": ["free", "paid-logpush"], "default": "free" }
+      }
+    },
+    "BudgetsConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maximumDatabaseQueries": { "type": "integer", "default": 3 },
+            "maximumKvReads": { "type": "integer", "default": 2 },
+            "maximumKvWrites": { "type": "integer", "default": 0 },
+            "maximumQueueWrites": { "type": "integer", "default": 2 },
+            "maximumB2Operations": { "type": "integer", "default": 1 }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,91 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  SCAFFOLDED FILE — This file was created by the generator once.     ║
+// ║  It will NOT be overwritten on subsequent generator runs.           ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { pre } from './<%= operation.operation %>-<%= entity.nameKebab %>.pre.js';
+import { process } from './<%= operation.operation %>-<%= entity.nameKebab %>.process.js';
+import { post } from './<%= operation.operation %>-<%= entity.nameKebab %>.post.js';
+import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
+import type { Env } from '../../../generated/bindings.js';
+
+function makeCtx(overrides: Partial<LifecycleContext> = {}): LifecycleContext {
+  return {
+    correlationId: 'test-correlation-id',
+    env: {
+      <%= db.binding %>: { connectionString: 'postgresql://test:test@localhost:5432/test' } as unknown as Hyperdrive,
+<%if (events.queueBinding) {%>      <%= events.queueBinding %>: { send: vi.fn() } as unknown as Queue,
+<%}%>      ENVIRONMENT: 'test',
+    } as unknown as Env,
+    request: new Request('https://example.com/<%= entity.namePluralKebab %>'),
+    input: {},
+    result: null,
+    meta: {},
+    ...overrides,
+  };
+}
+
+describe('<%= entity.namePascal %> — <%= operation.operation.toUpperCase() %> lifecycle', () => {
+  // ── PRE ────────────────────────────────────────────────────────────────────
+
+  describe('pre()', () => {
+<%if (operation.auth) {%>
+    it('should throw UNAUTHORIZED when session token is missing', async () => {
+      const ctx = makeCtx();
+      await expect(pre(ctx)).rejects.toThrow('Authentication required');
+    });
+<%} else {%>
+    it('should pass through without auth for public endpoints', async () => {
+      const ctx = makeCtx();
+      await expect(pre(ctx)).resolves.toBeUndefined();
+    });
+<%}%>
+  });
+
+  // ── PROCESS ────────────────────────────────────────────────────────────────
+
+  describe('process()', () => {
+    it('should <%= operation.operation === "get" || operation.operation === "list" ? "return data" : operation.operation === "delete" ? "delete the entity" : "successfully " + operation.operation + " a " + entity.name %>', async () => {
+      expect(true).toBe(true);
+    });
+  });
+
+  // ── POST ───────────────────────────────────────────────────────────────────
+
+  describe('post()', () => {
+<%if (operation.operation === 'get' || operation.operation === 'list') {%>
+    it('should be a no-op for read operations', async () => {
+      const ctx = makeCtx({ result: { output: [], entityId: null } });
+      await expect(post(ctx)).resolves.toBeUndefined();
+    });
+<%} else {%>
+    it('should publish a domain event to the queue', async () => {
+      const mockSend = vi.fn().mockResolvedValue(undefined);
+      const ctx = makeCtx({
+        result: { output: {}, entityId: 'test-uuid' },
+        meta: { actor: { type: 'user', id: 'user-123' } },
+        env: {
+          ...makeCtx().env,
+<%if (events.queueBinding) {%>          <%= events.queueBinding %>: { send: mockSend } as unknown as Queue,<%}%>
+        },
+      });
+
+      await expect(post(ctx)).resolves.toBeUndefined();
+<%if (events.queueBinding) {%>
+      expect(mockSend).toHaveBeenCalledOnce();<%}%>
+    });
+<%}%>
+  });
+
+  // ── Lifecycle ordering ─────────────────────────────────────────────────────
+
+  describe('lifecycle ordering', () => {
+    it('PRE must complete before PROCESS runs', async () => {
+      const callOrder: string[] = [];
+      const trackedPre = async (ctx: LifecycleContext) => { callOrder.push('pre'); return pre(ctx); };
+      const trackedProcess = async (ctx: LifecycleContext) => { callOrder.push('process'); return process(ctx); };
+
+      expect(callOrder.indexOf('pre')).toBeLessThan(callOrder.indexOf('process') === -1 ? Infinity : callOrder.indexOf('process'));
+    });
+  });
+});

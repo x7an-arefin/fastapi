@@ -1,0 +1,30 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
+// ║  Source: application.json                                           ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+
+/**
+ * Typed Cloudflare Workers environment bindings for <%= app.name %>.
+ * Generated from application.json. Run `wrangler types` to regenerate
+ * after changing wrangler.jsonc.
+ */
+export interface Env {
+  // Hyperdrive binding
+  <%= db.binding %>: Hyperdrive;
+<%if (auth && auth.session.cache === 'workers-kv') {%>
+  // KV session cache
+  <%= auth.session.kvBinding %>: KVNamespace;
+<%}%>
+<%if (events.queueBinding) {%>
+  // Domain events queue
+  <%= events.queueBinding %>: Queue;
+  <%= events.deadLetterQueueBinding %>: Queue;
+<%}%>
+<%ir.webhooks.forEach(function(wh) {%>
+  // Webhook secret: <%= wh.name %>
+  <%= wh.secretBinding %>: string;
+<%});%>
+
+  // General
+  ENVIRONMENT: string;
+}

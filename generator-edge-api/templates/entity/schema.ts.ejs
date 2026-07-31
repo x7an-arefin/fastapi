@@ -1,0 +1,45 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
+// ║  Entity: <%= entity.namePascal %>                                                   ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  integer,
+  bigint,
+  decimal,
+  boolean,
+  timestamp,
+  jsonb,
+  index,
+  uniqueIndex,
+  pgEnum,
+} from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+<%
+// Collect enum fields
+const enumFields = entity.fields.filter(f => f.type === 'enum');
+enumFields.forEach(function(f) {
+%>
+export const <%= f.nameCamel %>Enum = pgEnum('<%= entity.table %>_<%= f.nameSnake %>', [<%- f.enumValues.map(v => `'${v}'`).join(', ') %>]);
+<%});%>
+
+export const <%= entity.nameCamel %>Table = pgTable(
+  '<%= entity.table %>',
+  {
+<%entity.fields.forEach(function(field) {%>    <%= field.nameCamel %>: <%-
+    field.type === 'enum'
+      ? `${field.nameCamel}Enum('${field.nameSnake}')${field.default !== undefined ? `.default('${field.default}')` : ''}${!field.nullable && !field.primary ? '.notNull()' : ''}`
+      : `${field.drizzleColumn}${field.unique ? '.unique()' : ''}${!field.nullable && !field.primary && field.generated === false ? '.notNull()' : ''}${field.default !== undefined && field.generated === false ? `.default(${typeof field.default === 'string' ? `'${field.default}'` : field.default})` : ''}`
+%>,
+<%});%>
+  },
+  (table) => ({
+<%entity.indexes.forEach(function(idx) {%>    <%= idx.name %>: <%=idx.unique ? 'uniqueIndex' : 'index'%>('<%= idx.name %>').on(<%- idx.fields.map(f => `table.${naming.toCamelCase(f)}`).join(', ') %>),
+<%});%>  })
+);
+
+export type <%= entity.namePascal %>Insert = typeof <%= entity.nameCamel %>Table.$inferInsert;
+export type <%= entity.namePascal %>Select = typeof <%= entity.nameCamel %>Table.$inferSelect;

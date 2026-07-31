@@ -1,0 +1,25 @@
+// ╔══════════════════════════════════════════════════════════════════════╗
+// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
+// ╚══════════════════════════════════════════════════════════════════════╝
+import { Hono } from 'hono';
+import type { Env } from '../generated/bindings.js';
+<%ir.entities.forEach(function(entity) {%><%entity.operations.forEach(function(op) {%>
+import { <%= naming.toCamelCase(op.operation) %><%= entity.namePascal %>Route } from '../modules/<%= entity.nameKebab %>/<%= op.operation %>/<%= op.operation %>-<%= entity.nameKebab %>.route.js';<%});%><%});%>
+<%if (ir.storage) {%>
+import { uploadUrlRoute, completeUploadRoute } from '../modules/media/media.routes.js';<%}%>
+<%ir.webhooks.forEach(function(wh) {%>
+import { <%= wh.name %>WebhookHandler } from '../webhooks/<%= wh.name %>/handler.js';<%});%>
+
+export function registerRoutes(app: Hono<{ Bindings: Env }>): void {
+<%ir.entities.forEach(function(entity) {%>  // <%= entity.namePascal %> routes
+<%entity.operations.forEach(function(op) {%>  app.<%= op.method.toLowerCase() %>('<%= op.fullPath %>', <%= naming.toCamelCase(op.operation) %><%= entity.namePascal %>Route);
+<%});%>
+<%});%><%if (ir.storage) {%>
+  // Media routes
+  app.post('<%= app.apiPrefix %>/media/upload-url', uploadUrlRoute);
+  app.post('<%= app.apiPrefix %>/media/complete', completeUploadRoute);
+<%}%><%if (ir.webhooks.length > 0) {%>
+  // Webhook routes
+<%ir.webhooks.forEach(function(wh) {%>  app.post('<%= wh.path %>', <%= wh.name %>WebhookHandler);
+<%});%><%}%>
+}

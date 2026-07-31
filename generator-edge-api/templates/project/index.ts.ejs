@@ -1,0 +1,47 @@
+import app from './app.js';
+import type { Env } from './generated/bindings.js';
+import { domainEventConsumer } from './consumers/domain-event.consumer.js';<%if (email) {%>
+import { emailConsumer } from './consumers/email.consumer.js';<%}%>
+import { deadLetterConsumer } from './consumers/dead-letter.consumer.js';<%if (ir.scheduled.length > 0) {%><%ir.scheduled.forEach(function(job) {%>
+import { <%= naming.toCamelCase(job.name) %>Handler } from './scheduled/<%= job.nameKebab %>.js';<%});%><%}%>
+
+export default {
+  /**
+   * HTTP fetch handler — all API requests come through here.
+   */
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    return app.fetch(request, env, ctx);
+  },
+
+  /**
+   * Queue consumer handler — processes domain events and background jobs.
+   */
+  async queue(batch: MessageBatch<unknown>, env: Env, ctx: ExecutionContext): Promise<void> {
+    switch (batch.queue) {
+      case '<%= app.nameKebab %>-domain-events':
+        await domainEventConsumer(batch as any, env, ctx);
+        break;
+<%if (email) {%>      case '<%= app.nameKebab %>-email-jobs':
+        await emailConsumer(batch as any, env, ctx);
+        break;
+<%}%>      case '<%= app.nameKebab %>-domain-events-dlq':
+        await deadLetterConsumer(batch as any, env, ctx);
+        break;
+      default:
+        console.warn(`[index] Unknown queue: ${batch.queue}`);
+    }
+  },
+<%if (ir.scheduled.length > 0) {%>
+  /**
+   * Cron trigger handler — runs scheduled background jobs.
+   */
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    switch (event.cron) {
+<%ir.scheduled.forEach(function(job) {%>      case '<%= job.cron %>': // <%= job.description %>
+        await ctx.waitUntil(<%= naming.toCamelCase(job.name) %>Handler(env));
+        break;
+<%});%>      default:
+        console.warn(`[scheduled] Unknown cron: ${event.cron}`);
+    }
+  },<%}%>
+};
