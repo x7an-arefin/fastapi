@@ -1,12 +1,12 @@
 // ╔══════════════════════════════════════════════════════════════════════╗
 // ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
 // ╚══════════════════════════════════════════════════════════════════════╝
-/**
- * Application Error hierarchy — typed errors for the lifecycle system.
- * All thrown errors in lifecycle handlers should extend AppError.
- */
 
 export class AppError extends Error {
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(
     public readonly code: string,
     message: string,
@@ -14,12 +14,15 @@ export class AppError extends Error {
   ) {
     super(message);
     this.name = 'AppError';
-    // Restore prototype chain (required for ES5 transpilation)
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
 export class ValidationError extends AppError {
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(
     message: string,
     public readonly details?: Record<string, string[]>
@@ -30,6 +33,10 @@ export class ValidationError extends AppError {
 }
 
 export class NotFoundError extends AppError {
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(resource: string, id?: string) {
     super('NOT_FOUND', id ? `${resource} with id "${id}" not found` : `${resource} not found`, 404);
     this.name = 'NotFoundError';
@@ -37,6 +44,10 @@ export class NotFoundError extends AppError {
 }
 
 export class UnauthorizedError extends AppError {
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(message = 'Authentication required') {
     super('UNAUTHORIZED', message, 401);
     this.name = 'UnauthorizedError';
@@ -44,6 +55,10 @@ export class UnauthorizedError extends AppError {
 }
 
 export class ForbiddenError extends AppError {
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(message = 'Insufficient permissions') {
     super('FORBIDDEN', message, 403);
     this.name = 'ForbiddenError';
@@ -51,6 +66,10 @@ export class ForbiddenError extends AppError {
 }
 
 export class ConflictError extends AppError {
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(message: string) {
     super('CONFLICT', message, 409);
     this.name = 'ConflictError';
@@ -58,6 +77,10 @@ export class ConflictError extends AppError {
 }
 
 export class ConcurrencyError extends AppError {
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(resource: string) {
     super('CONCURRENCY_CONFLICT', `${resource} was modified by another request — please retry`, 409);
     this.name = 'ConcurrencyError';

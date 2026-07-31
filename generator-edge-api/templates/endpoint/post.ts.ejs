@@ -3,26 +3,7 @@
 // ║  It will NOT be overwritten on subsequent generator runs.           ║
 // ║  Edit freely — this is your business logic.                         ║
 // ╚══════════════════════════════════════════════════════════════════════╝
-/**
- * POST lifecycle handler for <%= operation.operation.toUpperCase() %> <%= entity.namePascal %>.
- *
- * Runs AFTER the main operation has succeeded.
- * Responsibilities:
- *   - Publish domain events to Cloudflare Queues (durable, retried)
- *   - Queue email jobs (never call email provider directly here)
- *   - Cache invalidation
- *   - Analytics dispatch (best-effort via ctx.waitUntil)
- *   - Search index synchronization
- *
- * Two modes:
- *   post.immediate — small, disposable work via ExecutionContext.waitUntil()
- *   post.queue     — durable work via Cloudflare Queues (retry-safe)
- *
- * RULES:
- *   - Never call external APIs synchronously here
- *   - Never do database writes here (use the PROCESS stage instead)
- *   - Queue payloads must be under 64 KB
- */
+
 import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
 import type { LifecycleResult } from '../../../core/lifecycle/lifecycle-result.js';
 <%if (operation.operation !== 'get' && operation.operation !== 'list') {%>
@@ -31,16 +12,15 @@ import { <%= naming.toScreamingSnakeCase(entity.name) %>_EVENTS } from '../<%= e
 <%}%>
 
 /**
- * POST hooks to run: <%= operation.lifecycle.post.join(', ') || 'none (read operation)' %>
+ * @author arefin
+ * @description POST lifecycle handler for <%= operation.operation.toUpperCase() %> <%= entity.namePascal %> — publishes domain events and performs post-operation side effects after the core logic succeeds
  */
 export async function post(ctx: LifecycleContext): Promise<void> {
 <%if (operation.operation === 'get' || operation.operation === 'list') {%>
-  // No post-processing for read operations
 <%} else {%>
   const entityId = ctx.result?.entityId ?? 'unknown';
   const actor = ctx.meta['actor'] as { type: string; id: string } | undefined;
 
-  // Publish domain event to Cloudflare Queue (durable, retry-safe)
   await publishEvent(ctx.env.<%= events.queueBinding %>, {
     eventName: <%= naming.toScreamingSnakeCase(entity.name) %>_EVENTS.<%= naming.toScreamingSnakeCase(operation.operation) %>D,
     correlationId: ctx.correlationId,
@@ -48,15 +28,8 @@ export async function post(ctx: LifecycleContext): Promise<void> {
     subject: { type: '<%= entity.name %>', id: entityId },
     data: {
       entityId,
-      // Add changed fields or summary data here
-      // Keep payload under 64 KB — don't include full database records
     },
   });
 
-  // TODO: Add additional post-operation work here
-  // Examples:
-  //   - await publishEvent(ctx.env.<%= events.queueBinding %>, { eventName: 'audit-event', ... });
-  //   - // Queue email via separate email queue binding
-  //   - // Invalidate CDN/KV cache
 <%}%>
 }

@@ -10,16 +10,18 @@ import { uploadUrlRoute, completeUploadRoute } from '../modules/media/media.rout
 <%ir.webhooks.forEach(function(wh) {%>
 import { <%= wh.name %>WebhookHandler } from '../webhooks/<%= wh.name %>/handler.js';<%});%>
 
+/**
+ * @author arefin
+ * @description Register all CRUD route handlers, media routes, and webhook routes on the Hono application instance
+ */
 export function registerRoutes(app: Hono<{ Bindings: Env }>): void {
-<%ir.entities.forEach(function(entity) {%>  // <%= entity.namePascal %> routes
+<%ir.entities.forEach(function(entity) {%>
 <%entity.operations.forEach(function(op) {%>  app.<%= op.method.toLowerCase() %>('<%= op.fullPath %>', <%= naming.toCamelCase(op.operation) %><%= entity.namePascal %>Route);
 <%});%>
 <%});%><%if (ir.storage) {%>
-  // Media routes
   app.post('<%= app.apiPrefix %>/media/upload-url', uploadUrlRoute);
   app.post('<%= app.apiPrefix %>/media/complete', completeUploadRoute);
 <%}%><%if (ir.webhooks.length > 0) {%>
-  // Webhook routes
 <%ir.webhooks.forEach(function(wh) {%>  app.post('<%= wh.path %>', <%= wh.name %>WebhookHandler);
 <%});%><%}%>
 }

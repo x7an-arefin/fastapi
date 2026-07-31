@@ -14,12 +14,15 @@ import { <%= entity.namePascal %>Repository } from '../<%= entity.nameKebab %>.r
 import { logger } from '../../../core/observability/logger.js';
 import { AppError } from '../../../core/errors/application-error.js';
 
+/**
+ * @author arefin
+ * @description Handle the HTTP request to <%= operation.operation %> a <%= entity.namePascal %> — orchestrates input validation, lifecycle execution, and response formatting
+ */
 export async function <%= naming.toCamelCase(operation.operation) %><%= entity.namePascal %>Route(c: Context<{ Bindings: Env }>): Promise<Response> {
   const correlationId = c.req.header('<%= observability.correlationHeader %>') ?? crypto.randomUUID();
   const startTime = Date.now();
 
   try {
-    // Parse and validate input
 <%if (operation.operation === 'create' || operation.operation === 'update') {%>
     const rawBody = await c.req.json().catch(() => ({}));
     const inputResult = <%= naming.toPascalCase(operation.operation) %><%= entity.namePascal %>InputSchema.safeParse(rawBody);
@@ -52,7 +55,6 @@ export async function <%= naming.toCamelCase(operation.operation) %><%= entity.n
     const input = inputResult.data;
 <%}%>
 
-    // Build lifecycle context
     const ctx: LifecycleContext = {
       correlationId,
       env: c.env,
@@ -66,10 +68,8 @@ export async function <%= naming.toCamelCase(operation.operation) %><%= entity.n
       },
     };
 
-    // Execute lifecycle: PRE → PROCESS → POST
     const result = await runLifecycle(ctx, { pre, process, post });
 
-    // Return response
     const statusCode = <%if (operation.operation === 'create') {%>201<%} else if (operation.operation === 'delete') {%>204<%} else {%>200<%}%>;
 <%if (operation.operation === 'delete') {%>
     return new Response(null, { status: 204 });

@@ -6,8 +6,8 @@ import { AppError } from './application-error.js';
 import { logger } from '../observability/logger.js';
 
 /**
- * Global Hono error handler — converts all thrown errors to structured JSON responses.
- * Internal details are never exposed to the client.
+ * @author arefin
+ * @description Global Hono error handler — converts all thrown errors to structured JSON responses without exposing internal details
  */
 export function errorHandler(err: Error, c: Context): Response {
   const correlationId = c.req.header('<%= observability.correlationHeader %>') ?? 'unknown';
@@ -34,7 +34,6 @@ export function errorHandler(err: Error, c: Context): Response {
     );
   }
 
-  // Unknown error — never expose internals
   logger.error({
     correlationId,
     error: String(err),

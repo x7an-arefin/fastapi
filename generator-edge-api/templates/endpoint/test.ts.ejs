@@ -9,6 +9,10 @@ import { post } from './<%= operation.operation %>-<%= entity.nameKebab %>.post.
 import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
 import type { Env } from '../../../generated/bindings.js';
 
+/**
+ * @author arefin
+ * @description Create a mock LifecycleContext for testing with sensible defaults and optional overrides
+ */
 function makeCtx(overrides: Partial<LifecycleContext> = {}): LifecycleContext {
   return {
     correlationId: 'test-correlation-id',
@@ -26,7 +30,6 @@ function makeCtx(overrides: Partial<LifecycleContext> = {}): LifecycleContext {
 }
 
 describe('<%= entity.namePascal %> — <%= operation.operation.toUpperCase() %> lifecycle', () => {
-  // ── PRE ────────────────────────────────────────────────────────────────────
 
   describe('pre()', () => {
 <%if (operation.auth) {%>
@@ -42,15 +45,11 @@ describe('<%= entity.namePascal %> — <%= operation.operation.toUpperCase() %> 
 <%}%>
   });
 
-  // ── PROCESS ────────────────────────────────────────────────────────────────
-
   describe('process()', () => {
     it('should <%= operation.operation === "get" || operation.operation === "list" ? "return data" : operation.operation === "delete" ? "delete the entity" : "successfully " + operation.operation + " a " + entity.name %>', async () => {
       expect(true).toBe(true);
     });
   });
-
-  // ── POST ───────────────────────────────────────────────────────────────────
 
   describe('post()', () => {
 <%if (operation.operation === 'get' || operation.operation === 'list') {%>
@@ -76,8 +75,6 @@ describe('<%= entity.namePascal %> — <%= operation.operation.toUpperCase() %> 
     });
 <%}%>
   });
-
-  // ── Lifecycle ordering ─────────────────────────────────────────────────────
 
   describe('lifecycle ordering', () => {
     it('PRE must complete before PROCESS runs', async () => {

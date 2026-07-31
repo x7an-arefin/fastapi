@@ -3,22 +3,7 @@
 // ║  It will NOT be overwritten on subsequent generator runs.           ║
 // ║  Edit freely — this is your business logic.                         ║
 // ╚══════════════════════════════════════════════════════════════════════╝
-/**
- * PROCESS lifecycle handler for <%= operation.operation.toUpperCase() %> <%= entity.namePascal %>.
- *
- * Runs the authoritative business operation.
- * Responsibilities:
- *   - Database read or mutation via Drizzle through Hyperdrive
- *   - Short transactions ONLY
- *   - Optimistic concurrency checks
- *   - Creating the canonical result
- *   - Writing the outbox event when delivery = "transactional-outbox"
- *
- * Rules:
- *   - NO third-party HTTP calls inside a transaction
- *   - NO queue writes inside an open transaction
- *   - Keep transactions as short as possible
- */
+
 import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
 import type { LifecycleResult } from '../../../core/lifecycle/lifecycle-result.js';
 import { <%= entity.namePascal %>Repository } from '../<%= entity.nameKebab %>.repository.js';
@@ -33,12 +18,12 @@ const isDelete = opName === 'delete';
 %>
 
 /**
- * PROCESS hooks to run: <%= operation.lifecycle.process.join(', ') %>
+ * @author arefin
+ * @description PROCESS lifecycle handler for <%= operation.operation.toUpperCase() %> <%= entity.namePascal %> — executes the core business operation via the repository
  */
 export async function process(ctx: LifecycleContext): Promise<LifecycleResult> {
   const repo = new <%= entity.namePascal %>Repository(ctx.env.<%= db.binding %>);
 <%if (isCreate) {%>
-  // Create the <%= entity.name %>
   const <%= entity.nameCamel %> = await repo.create(ctx.input as any);
 
   return { output: <%= entity.nameCamel %>, entityId: <%= entity.nameCamel %>.<%= entity.primaryKey.nameCamel %> };

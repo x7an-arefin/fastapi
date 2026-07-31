@@ -9,7 +9,6 @@ import { errorHandler } from './core/errors/error-handler.js';
 
 const app = new Hono<{ Bindings: Env }>();
 
-// Global middleware
 app.use('*', correlationMiddleware());
 app.use('*', secureHeaders());
 app.use('*', cors({
@@ -19,13 +18,10 @@ app.use('*', cors({
   exposeHeaders: ['<%= observability.correlationHeader %>'],
 }));
 
-// Register all CRUD routes
 registerRoutes(app);
 
-// Health check
 app.get('/health', (c) => c.json({ status: 'ok', service: '<%= app.name %>' }));
 
-// 404 handler
 app.notFound((c) => {
   return c.json({
     error: 'NOT_FOUND',
@@ -34,7 +30,6 @@ app.notFound((c) => {
   }, 404);
 });
 
-// Global error handler
 app.onError(errorHandler);
 
 export default app;

@@ -3,16 +3,11 @@
 // ║  Entity: <%= entity.namePascal %> — Event Name Constants                           ║
 // ╚══════════════════════════════════════════════════════════════════════╝
 
-/**
- * All event names for the <%= entity.namePascal %> entity.
- * Format: {domain}.{entity}.{operation}.{stage}.v{version}
- */
 export const <%= naming.toScreamingSnakeCase(entity.name) %>_EVENTS = {
-<%entity.operations.forEach(function(op) {%>  // <%= op.operation.toUpperCase() %> lifecycle events
+<%entity.operations.forEach(function(op) {%>
   <%= naming.toScreamingSnakeCase(op.operation) %>_PRE: '<%= op.lifecycleEventNames.pre %>',
   <%= naming.toScreamingSnakeCase(op.operation) %>_PROCESS: '<%= op.lifecycleEventNames.process %>',
   <%= naming.toScreamingSnakeCase(op.operation) %>_POST: '<%= op.lifecycleEventNames.post %>',
-  // Domain fact event (past tense)
   <%= naming.toScreamingSnakeCase(op.operation) %>D: '<%= op.domainEventName %>',
 
 <%});%>} as const;

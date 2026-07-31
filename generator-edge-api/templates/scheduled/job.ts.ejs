@@ -2,28 +2,19 @@
 // ║  SCAFFOLDED FILE — This file was created by the generator once.     ║
 // ║  It will NOT be overwritten on subsequent generator runs.           ║
 // ╚══════════════════════════════════════════════════════════════════════╝
-/**
- * Scheduled job: <%= extra.job.name %>
- * Cron: <%= extra.job.cron %>
- * Description: <%= extra.job.description %>
- *
- * Runs via Cloudflare Cron Triggers — DO NOT implement polling loops here.
- * This function is called once per cron schedule by the Workers runtime.
- */
+
 import type { Env } from '../generated/bindings.js';
 import { logger } from '../core/observability/logger.js';
 
+/**
+ * @author arefin
+ * @description Scheduled job handler for <%= extra.job.name %> — runs via Cloudflare Cron Triggers on schedule <%= extra.job.cron %>
+ */
 export async function <%= naming.toCamelCase(extra.job.name) %>Handler(env: Env): Promise<void> {
   const startTime = Date.now();
   logger.info({ action: '<%= extra.job.nameKebab %>_started', cron: '<%= extra.job.cron %>' });
 
   try {
-    // TODO: Implement scheduled job logic here
-    // Examples:
-    //   - Delete stale records
-    //   - Refresh cache counters
-    //   - Compile daily summaries
-    //   - Archive old audit logs
 
     logger.info({
       action: '<%= extra.job.nameKebab %>_completed',

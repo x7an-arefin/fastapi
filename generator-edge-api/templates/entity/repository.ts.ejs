@@ -14,10 +14,18 @@ const hasDeletedAt = entity.fields.some(f => f.nameCamel === 'deletedAt');
 export class <%= entity.namePascal %>Repository implements I<%= entity.namePascal %>Repository {
   private readonly db: ReturnType<typeof drizzle>;
 
+  /**
+   * @author arefin
+   * @description Initialize the repository with a Hyperdrive database connection
+   */
   constructor(hyperdrive: Hyperdrive) {
     this.db = drizzle(hyperdrive.connectionString, { logger: false });
   }
 
+  /**
+   * @author arefin
+   * @description Find a single <%= entity.namePascal %> entity by its unique identifier
+   */
   async findById(id: string): Promise<<%= entity.namePascal %>Entity | null> {
     const rows = await this.db
       .select()
@@ -32,6 +40,10 @@ export class <%= entity.namePascal %>Repository implements I<%= entity.namePasca
     return rows[0] ?? null;
   }
 
+  /**
+   * @author arefin
+   * @description Retrieve a paginated list of <%= entity.namePascal %> entities with optional filters
+   */
   async findAll(params: List<%= entity.namePascal %>Params): Promise<List<%= entity.namePascal %>Result> {
     const limit = Math.min(params.limit ?? 20, 100);
     const conditions = [];
@@ -65,6 +77,10 @@ export class <%= entity.namePascal %>Repository implements I<%= entity.namePasca
     return { items, nextCursor: nextCursor as string | null, hasMore };
   }
 
+  /**
+   * @author arefin
+   * @description Insert a new <%= entity.namePascal %> entity into the database and return the created record
+   */
   async create(data: New<%= entity.namePascal %>): Promise<<%= entity.namePascal %>Entity> {
     const rows = await this.db
       .insert(<%= entity.nameCamel %>Table)
@@ -75,6 +91,10 @@ export class <%= entity.namePascal %>Repository implements I<%= entity.namePasca
     return row;
   }
 
+  /**
+   * @author arefin
+   * @description Update an existing <%= entity.namePascal %> entity and return the modified record
+   */
   async update(data: Update<%= entity.namePascal %>): Promise<<%= entity.namePascal %>Entity | null> {
     const { <%= entity.primaryKey.nameCamel %>, ...rest } = data;
 <%if (entity.hasOptimisticConcurrency) {%>
@@ -90,6 +110,10 @@ export class <%= entity.namePascal %>Repository implements I<%= entity.namePasca
     return rows[0] ?? null;
   }
 
+  /**
+   * @author arefin
+   * @description Delete a <%= entity.namePascal %> entity by its unique identifier
+   */
   async delete(id: string): Promise<boolean> {
 <%if (entity.hasSoftDelete && hasDeletedAt) {%>
     const rows = await this.db

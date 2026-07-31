@@ -19,7 +19,6 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 <%
-// Collect enum fields
 const enumFields = entity.fields.filter(f => f.type === 'enum');
 enumFields.forEach(function(f) {
 %>
