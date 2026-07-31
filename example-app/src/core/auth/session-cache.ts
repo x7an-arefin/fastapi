@@ -1,28 +1,13 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-/**
- * Session Cache — KV-backed positive session cache.
- *
- * Architecture:
- *   - CockroachDB is the AUTHORITATIVE session store
- *   - Workers KV is a positive session CACHE (eventually consistent)
- *   - Short TTLs (5 min) minimize revocation gaps
- *
- * KV write budget constraints:
- *   - KV writes only happen on: login, password change, session renewal
- *   - Standard GET requests must NOT update KV
- *   - This keeps us within the 1,000 KV writes/day free-tier limit
- */
 import type { Env } from '../../generated/bindings.js';
 import type { SessionData } from './auth-port.js';
 import { logger } from '../observability/logger.js';
 
-const SESSION_TTL_SECONDS = 300; // 5 minutes — short to limit revocation window
+const SESSION_TTL_SECONDS = 300;
 const SESSION_KV_PREFIX = 'session:';
 
 /**
- * Extract the Bearer token from the Authorization header.
+ * @author arefin
+ * @description Extract the Bearer token from an HTTP Authorization header
  */
 function extractBearerToken(request: Request): string | null {
   const authHeader = request.headers.get('Authorization');
@@ -31,14 +16,12 @@ function extractBearerToken(request: Request): string | null {
 }
 
 /**
- * Verify session — checks KV cache first, falls back to DB on cache miss.
- * Security-sensitive endpoints should bypass KV and verify against DB directly.
+ * @author arefin
+ * @description Verify and retrieve the authenticated session from the session cache
  */
 export async function verifySession(env: Env, request: Request): Promise<SessionData | null> {
   const token = extractBearerToken(request);
   if (!token) return null;
-
-  // 1. Check KV cache (fast path — counts against 100K KV read budget)
 
   try {
     const cached = await env.AUTH_SESSION_KV.get(`${SESSION_KV_PREFIX}${token}`, 'json');
@@ -50,27 +33,13 @@ export async function verifySession(env: Env, request: Request): Promise<Session
     logger.warn({ action: 'session_cache_error', note: 'KV unavailable, falling back to DB' });
   }
 
-
-  // 2. Cache miss — verify against CockroachDB (authoritative)
-  // TODO: Implement DB session lookup using Better Auth
-  // const session = await betterAuthAdapter.verifySession(token);
-  // if (session) {
-  //   // Write to KV cache — only on successful DB verification
-  //   await env.AUTH_SESSION_KV.put(
-  //     `${SESSION_KV_PREFIX}${token}`,
-  //     JSON.stringify(session),
-  //     { expirationTtl: SESSION_TTL_SECONDS }
-  //   );
-  // }
-  // return session;
-
   logger.warn({ action: 'session_db_fallback', note: 'DB session lookup not yet implemented' });
   return null;
 }
 
 /**
- * Write a session to KV — call ONLY on login/renewal.
- * Never call this on standard API requests.
+ * @author arefin
+ * @description Store an authenticated session in the cache for subsequent requests
  */
 export async function cacheSession(env: Env, token: string, session: SessionData): Promise<void> {
 
@@ -84,7 +53,8 @@ export async function cacheSession(env: Env, token: string, session: SessionData
 }
 
 /**
- * Revoke a session from KV on logout.
+ * @author arefin
+ * @description Revoke an active session and remove it from the cache
  */
 export async function revokeSession(env: Env, token: string): Promise<void> {
 
@@ -94,7 +64,8 @@ export async function revokeSession(env: Env, token: string): Promise<void> {
 }
 
 /**
- * Check if the session has the required permissions.
+ * @author arefin
+ * @description Check whether the current session has all the required permissions
  */
 export function checkPermissions(session: SessionData, required: string[]): boolean {
   return required.every((perm) => session.permissions.includes(perm) || session.roles.includes('admin'));

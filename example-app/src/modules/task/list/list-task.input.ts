@@ -1,9 +1,4 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: Task | Operation: LIST — Input Schema  ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import { z } from 'zod';
-
 
 export const ListTaskInputSchema = z.object({
   cursor: z.string().optional(),
@@ -12,6 +7,5 @@ export const ListTaskInputSchema = z.object({
   userId: z.string().optional(),
 
 });
-
 
 export type ListTaskInput = z.infer<typeof ListTaskInputSchema>;

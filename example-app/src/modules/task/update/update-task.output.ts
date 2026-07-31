@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: Task | Operation: UPDATE — Output Schema ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import { z } from 'zod';
 
 const TaskBaseSchema = z.object({
@@ -14,8 +10,6 @@ const TaskBaseSchema = z.object({
 
 });
 
-
 export const UpdateTaskOutputSchema = TaskBaseSchema;
-
 
 export type UpdateTaskOutput = z.infer<typeof UpdateTaskOutputSchema>;

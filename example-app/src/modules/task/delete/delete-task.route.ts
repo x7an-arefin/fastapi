@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: Task | Operation: DELETE                        ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import type { Context } from 'hono';
 import type { Env } from '../../../generated/bindings.js';
 import { runLifecycle } from '../../../core/lifecycle/run-lifecycle.js';
@@ -14,12 +10,15 @@ import { TaskRepository } from '../task.repository.js';
 import { logger } from '../../../core/observability/logger.js';
 import { AppError } from '../../../core/errors/application-error.js';
 
+/**
+ * @author arefin
+ * @description Handle the HTTP request to delete a Task — orchestrates input validation, lifecycle execution, and response formatting
+ */
 export async function deleteTaskRoute(c: Context<{ Bindings: Env }>): Promise<Response> {
   const correlationId = c.req.header('x-correlation-id') ?? crypto.randomUUID();
   const startTime = Date.now();
 
   try {
-    // Parse and validate input
 
     const id = c.req.param('id');
     if (!id) {
@@ -27,8 +26,6 @@ export async function deleteTaskRoute(c: Context<{ Bindings: Env }>): Promise<Re
     }
     const input = { id };
 
-
-    // Build lifecycle context
     const ctx: LifecycleContext = {
       correlationId,
       env: c.env,
@@ -42,10 +39,8 @@ export async function deleteTaskRoute(c: Context<{ Bindings: Env }>): Promise<Re
       },
     };
 
-    // Execute lifecycle: PRE → PROCESS → POST
     const result = await runLifecycle(ctx, { pre, process, post });
 
-    // Return response
     const statusCode = 204;
 
     return new Response(null, { status: 204 });

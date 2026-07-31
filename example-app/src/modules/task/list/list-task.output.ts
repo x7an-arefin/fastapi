@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: Task | Operation: LIST — Output Schema ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import { z } from 'zod';
 
 const TaskBaseSchema = z.object({
@@ -14,12 +10,10 @@ const TaskBaseSchema = z.object({
 
 });
 
-
 export const ListTaskOutputSchema = z.object({
   items: z.array(TaskBaseSchema),
   nextCursor: z.string().nullable(),
   hasMore: z.boolean(),
 });
-
 
 export type ListTaskOutput = z.infer<typeof ListTaskOutputSchema>;

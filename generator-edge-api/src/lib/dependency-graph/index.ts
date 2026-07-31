@@ -1,14 +1,14 @@
-/**
- * Dependency Graph — topological sort of entity dependencies.
- * Ensures entities with foreign keys are generated after their referenced entities.
- */
-
 export interface DependencyNode {
   name: string;
   dependsOn: string[];
 }
 
 export class CircularDependencyError extends Error {
+
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(cycle: string[]) {
     super(`Circular dependency detected: ${cycle.join(' → ')}`);
     this.name = 'CircularDependencyError';
@@ -16,8 +16,8 @@ export class CircularDependencyError extends Error {
 }
 
 /**
- * Given a list of entity dependency nodes, return them in topological order.
- * Entities with no dependencies come first.
+ * @author arefin
+ * @description Perform a topological sort on dependency nodes to determine correct generation order
  */
 export function topologicalSort(nodes: DependencyNode[]): string[] {
   const nodeMap = new Map<string, DependencyNode>();
@@ -29,6 +29,10 @@ export function topologicalSort(nodes: DependencyNode[]): string[] {
   const inProgress = new Set<string>();
   const result: string[] = [];
 
+  /**
+   * @author arefin
+   * @description Recursively visit a dependency node during topological sort — detects cycles
+   */
   function visit(name: string, path: string[]): void {
     if (visited.has(name)) return;
     if (inProgress.has(name)) {
@@ -55,10 +59,12 @@ export function topologicalSort(nodes: DependencyNode[]): string[] {
   return result;
 }
 
-/**
- * Extract dependency nodes from raw entity specification.
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+/**
+ * @author arefin
+ * @description Extract dependency relationships between entities from the specification
+ */
 export function extractEntityDependencies(entities: Record<string, any>): DependencyNode[] {
   return Object.entries(entities).map(([entityName, entity]) => {
     const dependencies = new Set<string>();

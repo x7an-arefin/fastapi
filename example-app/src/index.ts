@@ -6,15 +6,18 @@ import { deadLetterConsumer } from './consumers/dead-letter.consumer.js';
 import { cleanupExpiredTasksHandler } from './scheduled/cleanup-expired-tasks.js';
 
 export default {
+
   /**
-   * HTTP fetch handler — all API requests come through here.
+   * @author arefin
+   * @description Handle incoming HTTP requests by delegating to the Hono application instance
    */
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     return app.fetch(request, env, ctx);
   },
 
   /**
-   * Queue consumer handler — processes domain events and background jobs.
+   * @author arefin
+   * @description Route incoming queue message batches to the appropriate consumer handler based on queue name
    */
   async queue(batch: MessageBatch<unknown>, env: Env, ctx: ExecutionContext): Promise<void> {
     switch (batch.queue) {
@@ -33,11 +36,12 @@ export default {
   },
 
   /**
-   * Cron trigger handler — runs scheduled background jobs.
+   * @author arefin
+   * @description Handle scheduled cron triggers and dispatch to the appropriate handler based on schedule expression
    */
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     switch (event.cron) {
-      case '0 0 * * *': // Archive completed tasks older than 30 days
+      case '0 0 * * *':
         await ctx.waitUntil(cleanupExpiredTasksHandler(env));
         break;
       default:

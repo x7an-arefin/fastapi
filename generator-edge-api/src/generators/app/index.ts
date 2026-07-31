@@ -1,14 +1,3 @@
-/**
- * Main app generator — orchestrates all sub-generators via Yeoman's compose API.
- *
- * Commands:
- *   yo edge-api --spec application.json          # Full generation
- *   yo edge-api:validate --spec application.json  # Validate only
- *   yo edge-api:plan --spec application.json      # Dry-run plan
- *   yo edge-api:entity product                    # Single entity
- *   yo edge-api:openapi                           # OpenAPI only
- *   yo edge-api:doctor                            # Health check
- */
 import Generator from 'yeoman-generator';
 import { resolve } from 'node:path';
 import { loadSpecification } from '../../lib/specification-loader/index.js';
@@ -25,6 +14,10 @@ type AnyOpts = Record<string, any>;
 export default class AppGenerator extends Generator {
   private ir!: ApplicationIR;
 
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(args: string | string[], opts: AnyOpts) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super(args as string[], opts as any);
@@ -47,6 +40,10 @@ export default class AppGenerator extends Generator {
     });
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman initializing phase — display banner, parse options, and load/validate the specification
+   */
   initializing(): void {
     this.log(chalk.bold.cyan(`
 ╔══════════════════════════════════════════════════════════╗
@@ -66,7 +63,6 @@ export default class AppGenerator extends Generator {
     this.log(chalk.blue(`📋 Specification: ${resolve(process.cwd(), specPath)}`));
     this.log(chalk.blue(`📁 Output: ${this.destinationRoot()}`));
 
-    // Load and validate specification
     const { raw, errors: schemaErrors } = loadSpecification(specPath);
 
     if (schemaErrors.length > 0) {
@@ -88,13 +84,16 @@ export default class AppGenerator extends Generator {
       throw new Error('Semantic validation failed');
     }
 
-    // Normalize to IR
     this.ir = normalizeSpecification(raw);
     this.log(chalk.green(`  ✅ Specification valid — ${this.ir.entities.length} entities\n`));
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman configuring phase — validate resource budgets and prepare generation context
+   */
   configuring(): void {
-    // Resource budget analysis
+
     const report = validateBudgets(this.ir);
     this.log(report.summary);
 
@@ -104,6 +103,10 @@ export default class AppGenerator extends Generator {
     }
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman writing phase — begin code generation or print dry-run plan
+   */
   writing(): void {
     const opts = this.options as AnyOpts;
     if (opts['dryRun']) {
@@ -114,6 +117,10 @@ export default class AppGenerator extends Generator {
     this.log(chalk.bold('\n🚀 Starting code generation...\n'));
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman default phase — compose and run all sub-generators for project scaffold, entities, endpoints, and OpenAPI
+   */
   async default(): Promise<void> {
     const opts = this.options as AnyOpts;
     if (opts['dryRun']) return;
@@ -124,23 +131,23 @@ export default class AppGenerator extends Generator {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const compose = (this as any).composeWith.bind(this);
 
-    // 1. Project scaffold
     const ProjectGen = (await import('../project/index.js')).default;
     await compose({ Generator: ProjectGen, path: 'generator-edge-api:project' }, subOpts);
 
-    // 2. Entity files
     const EntityGen = (await import('../entity/index.js')).default;
     await compose({ Generator: EntityGen, path: 'generator-edge-api:entity' }, subOpts);
 
-    // 3. Endpoint files
     const EndpointGen = (await import('../endpoint/index.js')).default;
     await compose({ Generator: EndpointGen, path: 'generator-edge-api:endpoint' }, subOpts);
 
-    // 4. OpenAPI document
     const OpenApiGen = (await import('../openapi/index.js')).default;
     await compose({ Generator: OpenApiGen, path: 'generator-edge-api:openapi' }, subOpts);
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman end phase — display completion message with next steps and generated file summary
+   */
   end(): void {
     const opts = this.options as AnyOpts;
     if (opts['dryRun']) return;
@@ -172,6 +179,10 @@ Scaffolded files (edit these — they won't be overwritten):
 `));
   }
 
+  /**
+   * @author arefin
+   * @description Print a dry-run plan showing which files would be generated without actually writing them
+   */
   private _printPlan(): void {
     this.log(chalk.bold.yellow('\n📋 DRY RUN — files that would be generated:\n'));
     this.log(chalk.cyan('Generated (always overwritten):'));

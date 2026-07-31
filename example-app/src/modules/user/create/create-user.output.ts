@@ -1,7 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: User | Operation: CREATE — Output Schema ║
-// ╚══════════════════════════════════════════════════════════════════════╝
 import { z } from 'zod';
 
 const UserBaseSchema = z.object({
@@ -13,8 +9,6 @@ const UserBaseSchema = z.object({
 
 });
 
-
 export const CreateUserOutputSchema = UserBaseSchema;
-
 
 export type CreateUserOutput = z.infer<typeof CreateUserOutputSchema>;

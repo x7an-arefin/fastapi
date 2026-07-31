@@ -1,22 +1,10 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-/**
- * Structured logger — outputs JSON to console for Cloudflare Logpush.
- *
- * Profile: free
- * FREE tier: structured console output only.
- * Use `wrangler tail` for real-time log streaming.
- *
- * RULES:
- *   - DO NOT make HTTP fetch() calls to logging services inside API handlers
- *   - Use Cloudflare Logpush for async telemetry (paid plan)
- *   - Correlation IDs must be included in every log entry
- */
-
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 type LogRecord = Record<string, unknown>;
 
+/**
+ * @author arefin
+ * @description Write a structured log entry with timestamp, level, and contextual data to stdout
+ */
 function log(level: LogLevel, data: LogRecord): void {
   const entry = JSON.stringify({
     level,

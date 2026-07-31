@@ -1,6 +1,3 @@
-/**
- * Specification sub-generator — validates and normalizes application.json.
- */
 import Generator from 'yeoman-generator';
 import { loadSpecification } from '../../lib/specification-loader/index.js';
 import { validateSemantics } from '../../lib/semantic-validator/index.js';
@@ -14,6 +11,10 @@ type AnyOpts = Record<string, any>;
 export default class SpecificationGenerator extends Generator {
   declare ir: ApplicationIR;
 
+  /**
+   * @author arefin
+   * @description Initialize the class instance with required dependencies and configuration
+   */
   constructor(args: string | string[], opts: AnyOpts) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super(args as string[], opts as any);
@@ -29,6 +30,10 @@ export default class SpecificationGenerator extends Generator {
     });
   }
 
+  /**
+   * @author arefin
+   * @description Yeoman initializing phase — display banner, parse options, and load/validate the specification
+   */
   async initializing(): Promise<void> {
     const opts = this.options as AnyOpts;
     const specPath = (opts['spec'] as string) ?? 'application.json';
