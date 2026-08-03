@@ -23,10 +23,18 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
     const fields = entity['fields'] as Record<string, RawSpec> | undefined;
     if (!fields) continue;
 
-    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(entityName)) {
+    if (!/^[A-Z][a-zA-Z0-9]*$/.test(entityName)) {
       errors.push({
         path: `entities.${entityName}`,
         message: `Entity name "${entityName}" must be alphanumeric starting with a letter`,
+        severity: 'error',
+      });
+    }
+
+    if (entityName.includes('/') || entityName.includes('\\') || entityName.includes('..')) {
+      errors.push({
+        path: `entities.${entityName}`,
+        message: `Entity name "${entityName}" must not contain path separators or traversal sequences`,
         severity: 'error',
       });
     }
@@ -165,6 +173,18 @@ export function validateSemantics(raw: RawSpec): SemanticError[] {
       message: 'Session KV cache requires a kvBinding name',
       severity: 'error',
     });
+  }
+
+  const appConfig = raw['application'] as RawSpec | undefined;
+  if (appConfig) {
+    const apiPrefix = appConfig['apiPrefix'] as string | undefined;
+    if (apiPrefix && (apiPrefix.includes('..') || apiPrefix.includes('///'))) {
+      errors.push({
+        path: 'application.apiPrefix',
+        message: 'apiPrefix must not contain path traversal sequences',
+        severity: 'error',
+      });
+    }
   }
 
   return errors;

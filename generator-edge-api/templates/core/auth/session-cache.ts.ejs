@@ -1,10 +1,6 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-
-import type { Env } from '../../generated/bindings.js';
+import type { Env } from '@generated/bindings.js';
 import type { SessionData } from './auth-port.js';
-import { logger } from '../observability/logger.js';
+import { logger } from '@core/observability/logger.js';
 
 const SESSION_TTL_SECONDS = 300;
 const SESSION_KV_PREFIX = 'session:';
@@ -39,7 +35,32 @@ export async function verifySession(env: Env, request: Request): Promise<Session
   }
 <%}%>
 
-  logger.warn({ action: 'session_db_fallback', note: 'DB session lookup not yet implemented' });
+  try {
+    const { drizzle } = await import('drizzle-orm/postgres-js');
+    const { eq, gt } = await import('drizzle-orm');
+    const { sessionTable } = await import('@core/auth/auth.schema.js');
+    const hyperdrive = (env as Record<string, unknown>)['<%= db.binding %>'] as Hyperdrive | undefined;
+    if (!hyperdrive?.connectionString) return null;
+    const db = drizzle(hyperdrive.connectionString);
+    const rows = await db
+      .select()
+      .from(sessionTable)
+      .where(eq(sessionTable.token, token))
+      .limit(1);
+    const dbSession = rows[0];
+    if (dbSession && new Date(dbSession.expiresAt) > new Date()) {
+      const sessionData: SessionData = {
+        userId: dbSession.userId,
+        roles: [],
+        permissions: [],
+      };
+      await cacheSession(env, token, sessionData);
+      logger.debug({ action: 'session_db_hit', userId: dbSession.userId });
+      return sessionData;
+    }
+  } catch (dbErr) {
+    logger.error({ action: 'session_db_error', error: String(dbErr) });
+  }
   return null;
 }
 

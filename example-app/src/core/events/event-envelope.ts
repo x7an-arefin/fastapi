@@ -1,7 +1,3 @@
-/**
- * @author arefin
- * @description Generate a cryptographically random UUID v4 string
- */
 const randomUUID = () => crypto.randomUUID();
 
 export interface EventEnvelope<T = unknown> {
@@ -33,10 +29,6 @@ export interface CreateEventOptions<T = unknown> {
   source?: 'api' | 'queue' | 'cron' | 'webhook';
 }
 
-/**
- * @author arefin
- * @description Create a structured event envelope with metadata for event-driven communication
- */
 export function createEventEnvelope<T = unknown>(options: CreateEventOptions<T>): EventEnvelope<T> {
   return {
     specVersion: '1.0',
@@ -58,7 +50,7 @@ export function createEventEnvelope<T = unknown>(options: CreateEventOptions<T>)
 
 /**
  * @author arefin
- * @description Validate that the event envelope payload does not exceed the maximum allowed size
+ * @description Validate that the event envelope payload does not exceed the 64 KB safety limit
  */
 export function assertPayloadSize(envelope: EventEnvelope): void {
   const bytes = new TextEncoder().encode(JSON.stringify(envelope)).length;

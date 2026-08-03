@@ -1,10 +1,12 @@
-import type { Env } from '../generated/bindings.js';
-import type { EventEnvelope } from '../core/events/event-envelope.js';
-import { logger } from '../core/observability/logger.js';
+
+
+import type { Env } from '@generated/bindings.js';
+import type { EventEnvelope } from '@core/events/event-envelope.js';
+import { logger } from '@core/observability/logger.js';
 
 /**
  * @author arefin
- * @description Process dead-letter queue messages — handle undeliverable events with logging and alerting
+ * @description Process dead-letter queue messages — log failed events for alerting and manual review
  */
 export async function deadLetterConsumer(
   batch: MessageBatch<EventEnvelope>,
@@ -20,7 +22,6 @@ export async function deadLetterConsumer(
       eventName: envelope.eventName,
       correlationId: envelope.correlationId,
       occurredAt: envelope.occurredAt,
-
     });
 
     message.ack();

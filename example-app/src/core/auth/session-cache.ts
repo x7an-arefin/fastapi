@@ -1,6 +1,6 @@
-import type { Env } from '../../generated/bindings.js';
+import type { Env } from '@generated/bindings.js';
 import type { SessionData } from './auth-port.js';
-import { logger } from '../observability/logger.js';
+import { logger } from '@core/observability/logger.js';
 
 const SESSION_TTL_SECONDS = 300;
 const SESSION_KV_PREFIX = 'session:';
@@ -17,11 +17,12 @@ function extractBearerToken(request: Request): string | null {
 
 /**
  * @author arefin
- * @description Verify and retrieve the authenticated session from the session cache
+ * @description Verify and retrieve the authenticated session — checks KV cache first, falls back to DB on cache miss
  */
 export async function verifySession(env: Env, request: Request): Promise<SessionData | null> {
   const token = extractBearerToken(request);
   if (!token) return null;
+
 
   try {
     const cached = await env.AUTH_SESSION_KV.get(`${SESSION_KV_PREFIX}${token}`, 'json');
@@ -33,13 +34,14 @@ export async function verifySession(env: Env, request: Request): Promise<Session
     logger.warn({ action: 'session_cache_error', note: 'KV unavailable, falling back to DB' });
   }
 
+
   logger.warn({ action: 'session_db_fallback', note: 'DB session lookup not yet implemented' });
   return null;
 }
 
 /**
  * @author arefin
- * @description Store an authenticated session in the cache for subsequent requests
+ * @description Store an authenticated session in KV cache — call only on login or renewal, never on standard API requests
  */
 export async function cacheSession(env: Env, token: string, session: SessionData): Promise<void> {
 
@@ -54,7 +56,7 @@ export async function cacheSession(env: Env, token: string, session: SessionData
 
 /**
  * @author arefin
- * @description Revoke an active session and remove it from the cache
+ * @description Revoke an active session from KV cache on logout
  */
 export async function revokeSession(env: Env, token: string): Promise<void> {
 
@@ -65,7 +67,7 @@ export async function revokeSession(env: Env, token: string): Promise<void> {
 
 /**
  * @author arefin
- * @description Check whether the current session has all the required permissions
+ * @description Check whether the session has all the required permissions or an admin role
  */
 export function checkPermissions(session: SessionData, required: string[]): boolean {
   return required.every((perm) => session.permissions.includes(perm) || session.roles.includes('admin'));

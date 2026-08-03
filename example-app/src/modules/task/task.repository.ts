@@ -1,26 +1,40 @@
+import { Service } from 'honestjs';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { eq, and, gt, desc, asc } from 'drizzle-orm';
 import type { TaskEntity, NewTask, UpdateTask, ITaskRepository, ListTaskParams, ListTaskResult } from './task.types.js';
 import { taskTable } from './task.schema.js';
-import { AppError } from '../../core/errors/application-error.js';
+import { AppError } from '@core/errors/application-error.js';
 
+
+@Service()
 export class TaskRepository implements ITaskRepository {
-  private readonly db: ReturnType<typeof drizzle>;
+  private readonly defaultDb: ReturnType<typeof drizzle>;
 
   /**
    * @author arefin
-   * @description Initialize the class instance with required dependencies and configuration
+   * @description Initialize the repository
    */
-  constructor(hyperdrive: Hyperdrive) {
-    this.db = drizzle(hyperdrive.connectionString, { logger: false });
+  constructor() {
+    this.defaultDb = drizzle('postgresql://placeholder:placeholder@localhost:5432/placeholder', { logger: false });
   }
 
   /**
    * @author arefin
-   * @description Find a single task entity by its unique identifier
+   * @description Get Drizzle database instance, using Hyperdrive connection when available
    */
-  async findById(id: string): Promise<TaskEntity | null> {
-    const rows = await this.db
+  private getDb(hyperdrive?: Hyperdrive): ReturnType<typeof drizzle> {
+    if (hyperdrive?.connectionString) {
+      return drizzle(hyperdrive.connectionString, { logger: false });
+    }
+    return this.defaultDb;
+  }
+
+  /**
+   * @author arefin
+   * @description Find a single Task entity by its unique identifier
+   */
+  async findById(id: string, hyperdrive?: Hyperdrive): Promise<TaskEntity | null> {
+    const rows = await this.getDb(hyperdrive)
       .select()
       .from(taskTable)
       .where(
@@ -34,25 +48,18 @@ export class TaskRepository implements ITaskRepository {
 
   /**
    * @author arefin
-   * @description Retrieve a paginated list of task entities with optional filters
+   * @description Retrieve a paginated list of Task entities with optional filters
    */
-  async findAll(params: ListTaskParams): Promise<ListTaskResult> {
+  async findAll(params: ListTaskParams, hyperdrive?: Hyperdrive): Promise<ListTaskResult> {
     const limit = Math.min(params.limit ?? 20, 100);
     const conditions = [];
 
-    if (params.status) {
-      conditions.push(eq(taskTable.status, params.status as any));
-    }
-
-    if (params.userId) {
-      conditions.push(eq(taskTable.userId, params.userId as any));
-    }
 
     if (params.cursor) {
       conditions.push(gt(taskTable.id, params.cursor));
     }
 
-    const rows = await this.db
+    const rows = await this.getDb(hyperdrive)
       .select()
       .from(taskTable)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -68,28 +75,28 @@ export class TaskRepository implements ITaskRepository {
 
   /**
    * @author arefin
-   * @description Insert a new task entity into the database and return the created record
+   * @description Insert a new Task entity into the database and return the created record
    */
-  async create(data: NewTask): Promise<TaskEntity> {
-    const rows = await this.db
+  async create(data: NewTask, hyperdrive?: Hyperdrive): Promise<TaskEntity> {
+    const rows = await this.getDb(hyperdrive)
       .insert(taskTable)
       .values(data as any)
       .returning();
     const row = rows[0];
-    if (!row) throw new AppError('DB_INSERT_FAILED', `Failed to insert task`, 500);
+    if (!row) throw new AppError('DB_INSERT_FAILED', `Failed to insert Task`, 500);
     return row;
   }
 
   /**
    * @author arefin
-   * @description Update an existing task entity and return the modified record
+   * @description Update an existing Task entity and return the modified record
    */
-  async update(data: UpdateTask): Promise<TaskEntity | null> {
+  async update(data: UpdateTask, hyperdrive?: Hyperdrive): Promise<TaskEntity | null> {
     const { id, ...rest } = data;
 
     const updateData = { ...rest, updatedAt: new Date() };
 
-    const rows = await this.db
+    const rows = await this.getDb(hyperdrive)
       .update(taskTable)
       .set(updateData as any)
       .where(eq(taskTable.id, id))
@@ -99,11 +106,11 @@ export class TaskRepository implements ITaskRepository {
 
   /**
    * @author arefin
-   * @description Delete a task entity by its unique identifier and return whether the operation succeeded
+   * @description Delete a Task entity by its unique identifier
    */
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string, hyperdrive?: Hyperdrive): Promise<boolean> {
 
-    const rows = await this.db
+    const rows = await this.getDb(hyperdrive)
       .delete(taskTable)
       .where(eq(taskTable.id, id))
       .returning();

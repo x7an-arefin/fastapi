@@ -55,6 +55,9 @@
     },
     "budgets": {
       "$ref": "#/definitions/BudgetsConfig"
+    },
+    "security": {
+      "$ref": "#/definitions/SecurityConfig"
     }
   },
   "definitions": {
@@ -129,7 +132,8 @@
           "type": "array",
           "items": { "$ref": "#/definitions/IndexConfig" }
         },
-        "crud": { "$ref": "#/definitions/CrudConfig" }
+        "crud": { "$ref": "#/definitions/CrudConfig" },
+        "timestamps": { "type": "boolean", "default": true }
       }
     },
     "FieldConfig": {
@@ -162,7 +166,10 @@
       "additionalProperties": false,
       "properties": {
         "entity": { "type": "string" },
-        "field": { "type": "string" }
+        "field": { "type": "string" },
+        "onDelete": { "type": "string", "enum": ["cascade", "set-null", "restrict", "no-action"], "default": "no-action" },
+        "onUpdate": { "type": "string", "enum": ["cascade", "set-null", "restrict", "no-action"], "default": "no-action" },
+        "relation": { "type": "string", "enum": ["many-to-one", "one-to-one"], "default": "many-to-one" }
       }
     },
     "IndexConfig": {
@@ -291,7 +298,7 @@
           "required": ["type", "secretBinding"],
           "additionalProperties": false,
           "properties": {
-            "type": { "type": "string", "enum": ["stripe", "github", "shopify", "hmac"] },
+            "type": { "type": "string", "enum": ["stripe", "github", "shopify", "hmac", "custom"] },
             "secretBinding": { "type": "string" }
           }
         },
@@ -332,6 +339,34 @@
             "maximumKvWrites": { "type": "integer", "default": 0 },
             "maximumQueueWrites": { "type": "integer", "default": 2 },
             "maximumB2Operations": { "type": "integer", "default": 1 }
+          }
+        }
+      }
+    },
+    "SecurityConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "defaultAuth": { "type": "boolean", "default": false },
+        "cors": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "origins": { "type": "array", "items": { "type": "string" }, "default": ["*"] },
+            "methods": { "type": "array", "items": { "type": "string" } },
+            "credentials": { "type": "boolean", "default": false },
+            "maxAge": { "type": "integer", "default": 86400 }
+          }
+        },
+        "rateLimit": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "windowMs": { "type": "integer", "default": 60000 },
+            "maxRequests": { "type": "integer", "default": 100 },
+            "store": { "type": "string", "enum": ["memory", "kv"], "default": "kv" },
+            "kvBinding": { "type": "string" }
           }
         }
       }

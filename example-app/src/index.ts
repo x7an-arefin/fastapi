@@ -1,18 +1,18 @@
-import app from './app.js';
-import type { Env } from './generated/bindings.js';
-import { domainEventConsumer } from './consumers/domain-event.consumer.js';
-import { emailConsumer } from './consumers/email.consumer.js';
-import { deadLetterConsumer } from './consumers/dead-letter.consumer.js';
-import { cleanupExpiredTasksHandler } from './scheduled/cleanup-expired-tasks.js';
+import 'reflect-metadata';
+import { hono } from './app.js';
+import type { Env } from '@generated/bindings.js';
+import { domainEventConsumer } from '@consumers/domain-event.consumer.js';
+import { deadLetterConsumer } from '@consumers/dead-letter.consumer.js';
+import { cleanupExpiredTasksHandler } from '@scheduled/cleanup-expired-tasks.js';
 
 export default {
 
   /**
    * @author arefin
-   * @description Handle incoming HTTP requests by delegating to the Hono application instance
+   * @description Handle incoming HTTP requests by delegating to the HonestJS application instance
    */
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    return app.fetch(request, env, ctx);
+    return hono.fetch(request, env, ctx);
   },
 
   /**
@@ -24,9 +24,6 @@ export default {
       case 'task-master-api-domain-events':
         await domainEventConsumer(batch as any, env, ctx);
         break;
-      case 'task-master-api-email-jobs':
-        await emailConsumer(batch as any, env, ctx);
-        break;
       case 'task-master-api-domain-events-dlq':
         await deadLetterConsumer(batch as any, env, ctx);
         break;
@@ -37,11 +34,11 @@ export default {
 
   /**
    * @author arefin
-   * @description Handle scheduled cron triggers and dispatch to the appropriate handler based on schedule expression
+   * @description Handle scheduled cron triggers and dispatch to the appropriate background job handler
    */
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     switch (event.cron) {
-      case '0 0 * * *':
+      case '0 2 * * *':
         await ctx.waitUntil(cleanupExpiredTasksHandler(env));
         break;
       default:

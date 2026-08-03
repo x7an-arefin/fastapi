@@ -1,53 +1,31 @@
-import app from './app.js';
-import type { Env } from './generated/bindings.js';
-import { domainEventConsumer } from './consumers/domain-event.consumer.js';<%if (email) {%>
-import { emailConsumer } from './consumers/email.consumer.js';<%}%>
-import { deadLetterConsumer } from './consumers/dead-letter.consumer.js';<%if (ir.scheduled.length > 0) {%><%ir.scheduled.forEach(function(job) {%>
-import { <%= naming.toCamelCase(job.name) %>Handler } from './scheduled/<%= job.nameKebab %>.js';<%});%><%}%>
+import { hono } from './app.js';
+import { validateBindings } from '@core/startup/validate-bindings.js';
+import type { Env } from '@generated/bindings.js';
 
+/**
+ * @author arefin
+ * @description Cloudflare Worker entry point — validates bindings and delegates to the HonestJS application
+ */
 export default {
-  
-  /**
-   * @author arefin
-   * @description Handle incoming HTTP requests by delegating to the Hono application instance
-   */
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    return app.fetch(request, env, ctx);
+  fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    validateBindings(env);
+    return hono.fetch(request, env, ctx);
   },
-
-  
-  /**
-   * @author arefin
-   * @description Route incoming queue message batches to the appropriate consumer handler based on queue name
-   */
+<% if (ir.scheduled.length > 0) { %>
+  scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): void {
+    // Scheduled handlers are dispatched per-cron in the app router
+    void ctx;
+    void env;
+  },
+<% } %>
+<% if (ir.events.queueBinding) { %>
   async queue(batch: MessageBatch<unknown>, env: Env, ctx: ExecutionContext): Promise<void> {
-    switch (batch.queue) {
-      case '<%= app.nameKebab %>-domain-events':
-        await domainEventConsumer(batch as any, env, ctx);
-        break;
-<%if (email) {%>      case '<%= app.nameKebab %>-email-jobs':
-        await emailConsumer(batch as any, env, ctx);
-        break;
-<%}%>      case '<%= app.nameKebab %>-domain-events-dlq':
-        await deadLetterConsumer(batch as any, env, ctx);
-        break;
-      default:
-        console.warn(`[index] Unknown queue: ${batch.queue}`);
+    const { domainEventConsumer } = await import('./consumers/domain-event.consumer.js');
+    const { deadLetterConsumer } = await import('./consumers/dead-letter.consumer.js');
+    if (batch.queue.endsWith('-dlq')) {
+      return deadLetterConsumer(batch as MessageBatch<import('@core/events/event-envelope.js').EventEnvelope>, env, ctx);
     }
+    return domainEventConsumer(batch as MessageBatch<import('@core/events/event-envelope.js').EventEnvelope>, env, ctx);
   },
-<%if (ir.scheduled.length > 0) {%>
-  
-  /**
-   * @author arefin
-   * @description Handle scheduled cron triggers and dispatch to the appropriate background job handler
-   */
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    switch (event.cron) {
-<%ir.scheduled.forEach(function(job) {%>      case '<%= job.cron %>':
-        await ctx.waitUntil(<%= naming.toCamelCase(job.name) %>Handler(env));
-        break;
-<%});%>      default:
-        console.warn(`[scheduled] Unknown cron: ${event.cron}`);
-    }
-  },<%}%>
+<% } %>
 };

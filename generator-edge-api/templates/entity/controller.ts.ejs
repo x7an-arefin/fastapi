@@ -1,0 +1,122 @@
+import { Controller, Post, Get, Patch, Delete, Body, Param, Query, Ctx, UseGuards } from 'honestjs';
+import { z } from 'zod';
+import type { Context } from 'hono';
+import { <%= entity.namePascal %>Service } from './<%= entity.nameKebab %>.service.js';
+import { AuthGuard } from '@core/guards/auth.guard.js';
+import { Public } from '@core/decorators/public.decorator.js';
+<% for (const op of entity.operations) { %>
+import { <%= naming.toPascalCase(op.operation) %><%= entity.namePascal %>InputSchema } from './<%= op.operation %>/<%= op.operation %>-<%= entity.nameKebab %>.input.js';
+<% } %>
+
+/**
+ * @author arefin
+ * @description HTTP controller that maps <%= entity.namePascal %> CRUD endpoints and delegates execution to <%= entity.namePascal %>Service
+ */
+@Controller('<%= entity.namePluralKebab %>')<% if (security && security.defaultAuth) { %>
+@UseGuards(AuthGuard)<% } %>
+export class <%= entity.namePascal %>Controller {
+  constructor(private readonly service: <%= entity.namePascal %>Service) {}
+<% for (const op of entity.operations) { %>
+<% if (op.operation === 'create') { %>
+
+  /**
+   * @author arefin
+   * @description Handle <%= op.method %> <%= op.fullPath %> — validate input and delegate to create lifecycle
+   */
+  <% if (security && security.defaultAuth && !op.auth) { %>@Public()
+  <% } else if (security && !security.defaultAuth && op.auth) { %>@UseGuards(AuthGuard)
+  <% } %>@Post('')
+  async create(
+    @Body() body: unknown,
+    @Ctx() c: Context,
+  ): Promise<Response> {
+    const inputResult = <%= naming.toPascalCase(op.operation) %><%= entity.namePascal %>InputSchema.safeParse(body);
+    if (!inputResult.success) {
+      return c.json({ error: 'VALIDATION_ERROR', details: inputResult.error.flatten().fieldErrors }, 422);
+    }
+    return this.service.<%= op.operation %>(inputResult.data, c);
+  }
+<% } else if (op.operation === 'get') { %>
+
+  /**
+   * @author arefin
+   * @description Handle <%= op.method %> <%= op.fullPath %> — validate input and delegate to get lifecycle
+   */
+  <% if (security && security.defaultAuth && !op.auth) { %>@Public()
+  <% } else if (security && !security.defaultAuth && op.auth) { %>@UseGuards(AuthGuard)
+  <% } %>@Get('/:id')
+  async get(
+    @Param('id') id: string,
+    @Ctx() c: Context,
+  ): Promise<Response> {
+    const uuidResult = z.string().uuid().safeParse(id);
+    if (!uuidResult.success) {
+      return c.json({ error: 'VALIDATION_ERROR', message: 'Invalid ID format — expected a UUID' }, 400);
+    }
+    return this.service.get({ id }, c);
+  }
+<% } else if (op.operation === 'list') { %>
+
+  /**
+   * @author arefin
+   * @description Handle <%= op.method %> <%= op.fullPath %> — validate input and delegate to list lifecycle
+   */
+  <% if (security && security.defaultAuth && !op.auth) { %>@Public()
+  <% } else if (security && !security.defaultAuth && op.auth) { %>@UseGuards(AuthGuard)
+  <% } %>@Get('')
+  async list(
+    @Query() query: Record<string, string>,
+    @Ctx() c: Context,
+  ): Promise<Response> {
+    const inputResult = <%= naming.toPascalCase(op.operation) %><%= entity.namePascal %>InputSchema.safeParse(query);
+    if (!inputResult.success) {
+      return c.json({ error: 'VALIDATION_ERROR', details: inputResult.error.flatten().fieldErrors }, 422);
+    }
+    return this.service.list(inputResult.data, c);
+  }
+<% } else if (op.operation === 'update') { %>
+
+  /**
+   * @author arefin
+   * @description Handle <%= op.method %> <%= op.fullPath %> — validate input and delegate to update lifecycle
+   */
+  <% if (security && security.defaultAuth && !op.auth) { %>@Public()
+  <% } else if (security && !security.defaultAuth && op.auth) { %>@UseGuards(AuthGuard)
+  <% } %>@Patch('/:id')
+  async update(
+    @Body() body: unknown,
+    @Param('id') id: string,
+    @Ctx() c: Context,
+  ): Promise<Response> {
+    const uuidResult = z.string().uuid().safeParse(id);
+    if (!uuidResult.success) {
+      return c.json({ error: 'VALIDATION_ERROR', message: 'Invalid ID format — expected a UUID' }, 400);
+    }
+    const inputResult = <%= naming.toPascalCase(op.operation) %><%= entity.namePascal %>InputSchema.safeParse(body);
+    if (!inputResult.success) {
+      return c.json({ error: 'VALIDATION_ERROR', details: inputResult.error.flatten().fieldErrors }, 422);
+    }
+    return this.service.update({ ...inputResult.data, id }, c);
+  }
+<% } else if (op.operation === 'delete') { %>
+
+  /**
+   * @author arefin
+   * @description Handle <%= op.method %> <%= op.fullPath %> — validate input and delegate to delete lifecycle
+   */
+  <% if (security && security.defaultAuth && !op.auth) { %>@Public()
+  <% } else if (security && !security.defaultAuth && op.auth) { %>@UseGuards(AuthGuard)
+  <% } %>@Delete('/:id')
+  async delete(
+    @Param('id') id: string,
+    @Ctx() c: Context,
+  ): Promise<Response> {
+    const uuidResult = z.string().uuid().safeParse(id);
+    if (!uuidResult.success) {
+      return c.json({ error: 'VALIDATION_ERROR', message: 'Invalid ID format — expected a UUID' }, 400);
+    }
+    return this.service.delete({ id }, c);
+  }
+<% } %>
+<% } %>
+}

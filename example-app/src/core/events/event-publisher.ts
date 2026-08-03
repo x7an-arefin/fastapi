@@ -1,10 +1,8 @@
-import { createEventEnvelope, assertPayloadSize, type CreateEventOptions, type EventEnvelope } from './event-envelope.js';
-import { logger } from '../observability/logger.js';
 
-/**
- * @author arefin
- * @description Publish a single domain event to the configured message queue
- */
+
+import { createEventEnvelope, assertPayloadSize, type CreateEventOptions, type EventEnvelope } from './event-envelope.js';
+import { logger } from '@core/observability/logger.js';
+
 export async function publishEvent<T = unknown>(
   queue: Queue,
   options: CreateEventOptions<T>
@@ -26,10 +24,6 @@ export async function publishEvent<T = unknown>(
   });
 }
 
-/**
- * @author arefin
- * @description Publish multiple domain events in a batch to the configured message queue
- */
 export async function publishEvents<T = unknown>(
   queue: Queue,
   events: CreateEventOptions<T>[]

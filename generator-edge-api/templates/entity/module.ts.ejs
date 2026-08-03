@@ -1,0 +1,14 @@
+import { Module } from 'honestjs';
+import { <%- entity.namePascal %>Controller } from './<%- entity.nameKebab %>.controller.js';
+import { <%- entity.namePascal %>Service } from './<%- entity.nameKebab %>.service.js';
+import { <%- entity.namePascal %>Repository } from './<%- entity.nameKebab %>.repository.js';
+
+/**
+ * @author arefin
+ * @description Feature module that registers the <%- entity.namePascal %> controller, service, and repository with the DI container
+ */
+@Module({
+  controllers: [<%- entity.namePascal %>Controller],
+  services: [<%- entity.namePascal %>Service, <%- entity.namePascal %>Repository],
+})
+export class <%- entity.namePascal %>Module {}

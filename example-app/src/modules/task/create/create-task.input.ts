@@ -1,12 +1,15 @@
 import { z } from 'zod';
 
+
 export const CreateTaskInputSchema = z.object({
-  title: z.string().min(1).max(200),
+  title: z.string(),
   description: z.string().optional(),
-  status: z.enum(['todo', 'in_progress', 'completed', 'archived']).optional().default('todo'),
-  priority: z.number().int().default(1),
+  status: z.string().default('pending'),
+  priority: z.string().default('medium'),
   userId: z.string().uuid(),
 
 });
+
+
 
 export type CreateTaskInput = z.infer<typeof CreateTaskInputSchema>;

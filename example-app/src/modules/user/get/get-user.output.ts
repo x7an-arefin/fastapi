@@ -4,11 +4,12 @@ const UserBaseSchema = z.object({
   id: z.string(),
   email: z.string(),
   name: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  role: z.string(),
 
 });
 
+
 export const GetUserOutputSchema = UserBaseSchema;
+
 
 export type GetUserOutput = z.infer<typeof GetUserOutputSchema>;

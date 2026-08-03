@@ -14,6 +14,19 @@ async function main(): Promise<void> {
   const env = createEnv();
 
   switch (command) {
+    case 'init': {
+      const { initWizard } = await import('./cli/init.js');
+      await initWizard(specFlag);
+      break;
+    }
+
+    case 'diff': {
+      const specB = args[2] ?? 'application.json';
+      const { diffSpecs } = await import('./cli/diff.js');
+      await diffSpecs(specFlag, specB);
+      break;
+    }
+
     case 'validate':
       await runValidate(env, specFlag);
       break;
@@ -83,8 +96,13 @@ async function runGenerate(env: any, specPath: string, dryRun: boolean): Promise
   await env.run('edge-api:app', { spec: specPath, dryRun, force: true });
 }
 
-main().catch((err: Error) => {
-  console.error('\n❌ Generator failed:', err.message);
-  if (process.env['DEBUG']) console.error(err.stack);
+main().catch((err: unknown) => {
+  if (err instanceof SyntaxError) {
+    console.error('\n❌ JSON parse error in specification file:', (err as SyntaxError).message);
+    console.error('   Hint: Check for trailing commas, missing quotes, or unmatched braces.');
+  } else {
+    console.error('\n❌ Generator failed:', err instanceof Error ? err.message : String(err));
+  }
+  if (process.env['DEBUG'] && err instanceof Error) console.error(err.stack);
   process.exit(1);
 });

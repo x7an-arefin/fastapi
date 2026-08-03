@@ -1,13 +1,7 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  SCAFFOLDED FILE — This file was created by the generator once.     ║
-// ║  It will NOT be overwritten on subsequent generator runs.           ║
-// ║  Edit freely — this is your business logic.                         ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-
-import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
-import type { LifecycleResult } from '../../../core/lifecycle/lifecycle-result.js';
-import { <%= entity.namePascal %>Repository } from '../<%= entity.nameKebab %>.repository.js';
-import { AppError } from '../../../core/errors/application-error.js';
+import type { LifecycleContext } from '@core/lifecycle/lifecycle-context.js';
+import type { LifecycleResult } from '@core/lifecycle/lifecycle-result.js';
+import { <%= entity.namePascal %>Repository } from '@modules/<%= entity.nameKebab %>/<%= entity.nameKebab %>.repository.js';
+import { AppError } from '@core/errors/application-error.js';
 <%
 const opName = operation.operation;
 const isCreate = opName === 'create';
@@ -22,7 +16,7 @@ const isDelete = opName === 'delete';
  * @description PROCESS lifecycle handler for <%= operation.operation.toUpperCase() %> <%= entity.namePascal %> — executes the core business operation via the repository
  */
 export async function process(ctx: LifecycleContext): Promise<LifecycleResult> {
-  const repo = new <%= entity.namePascal %>Repository(ctx.env.<%= db.binding %>);
+  const repo = new <%= entity.namePascal %>Repository();
 <%if (isCreate) {%>
   const <%= entity.nameCamel %> = await repo.create(ctx.input as any);
 

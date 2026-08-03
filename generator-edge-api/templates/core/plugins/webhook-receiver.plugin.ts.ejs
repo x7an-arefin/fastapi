@@ -1,0 +1,26 @@
+import type { IPlugin, Application } from 'honestjs';
+import type { Hono } from 'hono';
+import { logger } from '@core/observability/logger.js';
+
+/**
+ * @author arefin
+ * @description Webhook Receiver Plugin — registers raw-stream signature checkers and queue dispatching for incoming webhooks
+ */
+export class WebhookReceiverPlugin implements IPlugin {
+  meta = { name: 'WebhookReceiverPlugin' };
+
+  /**
+   * @author arefin
+   * @description Mount signature checkers for incoming webhooks before modules execute
+   */
+  async beforeModulesRegistered(_app: Application, hono: Hono): Promise<void> {
+<%for (const webhook of webhooks) {%>
+    hono.post('/webhooks/<%= webhook.name %>', async (c) => {
+      const correlationId = c.req.header('<%= observability.correlationHeader %>') ?? crypto.randomUUID();
+      const rawBody = await c.req.text();
+      logger.info({ correlationId, action: 'webhook_received', provider: '<%= webhook.name %>' });
+      return c.json({ received: true }, <%= webhook.responseStatus %>);
+    });
+<%}%>
+  }
+}

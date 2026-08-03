@@ -1,7 +1,3 @@
-/**
- * Wrangler configuration for task-master-api
- * Managed file — updated by the generator via structured merge.
- */
 {
   "name": "task-master-api",
   "main": "src/index.ts",
@@ -46,11 +42,24 @@
 
   "triggers": {
     "crons": [
-      "0 0 * * *"
+      "0 2 * * *"
     ]
   },
 
   "vars": {
     "ENVIRONMENT": "development"
+  },
+
+  "env": {
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging"
+      }
+    },
+    "production": {
+      "vars": {
+        "ENVIRONMENT": "production"
+      }
+    }
   }
 }

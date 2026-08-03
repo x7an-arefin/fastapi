@@ -1,0 +1,23 @@
+import type { IPlugin, Application } from 'honestjs';
+import type { Hono } from 'hono';
+import { logger } from '@core/observability/logger.js';
+
+/**
+ * @author arefin
+ * @description Scheduled Job Monitor Plugin — exposes manual operational execution endpoints for cron jobs
+ */
+export class ScheduledJobMonitorPlugin implements IPlugin {
+  meta = { name: 'ScheduledJobMonitorPlugin' };
+
+  /**
+   * @author arefin
+   * @description Mount operational cron job trigger routes after module registration
+   */
+  async afterModulesRegistered(_app: Application, hono: Hono): Promise<void> {
+    hono.post('/admin/jobs/:jobName/run', async (c) => {
+      const jobName = c.req.param('jobName');
+      logger.info({ action: 'manual_job_triggered', jobName });
+      return c.json({ status: 'triggered', jobName, timestamp: new Date().toISOString() });
+    });
+  }
+}

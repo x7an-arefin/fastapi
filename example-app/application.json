@@ -1,40 +1,29 @@
 {
-  "$schema": "../generator-edge-api/schemas/application.schema.json",
+  "$schema": "https://edge-api.dev/schemas/application.schema.json",
   "specVersion": "1.0",
   "application": {
-    "name": "task-master-api",
-    "domain": "tasks",
+    "name": "TaskMaster API",
+    "domain": "taskmaster-api",
     "apiPrefix": "/api/v1",
     "runtime": "cloudflare-workers",
     "framework": "hono",
     "language": "typescript"
   },
   "database": {
-    "provider": "cockroachdb",
+    "provider": "postgresql",
     "connection": "hyperdrive",
-    "orm": "drizzle",
     "binding": "HYPERDRIVE",
-    "migrations": true
+    "orm": "drizzle"
   },
   "authentication": {
     "provider": "better-auth",
     "session": {
-      "primaryStore": "cockroachdb",
       "cache": "workers-kv",
-      "kvBinding": "AUTH_SESSION_KV",
-      "writePolicy": "auth-events-only"
+      "kvBinding": "AUTH_SESSION_KV"
     }
   },
-  "events": {
-    "version": 1,
-    "defaultPostMode": "queue",
-    "queueBinding": "DOMAIN_EVENTS",
-    "deadLetterQueueBinding": "DOMAIN_EVENTS_DLQ",
-    "includeCorrelationId": true,
-    "includeActor": true
-  },
   "entities": {
-    "user": {
+    "User": {
       "table": "users",
       "fields": {
         "id": {
@@ -45,51 +34,40 @@
         "email": {
           "type": "string",
           "required": true,
-          "unique": true,
-          "maxLength": 255
+          "unique": true
         },
         "name": {
           "type": "string",
-          "required": true,
-          "maxLength": 100
+          "required": true
         },
         "role": {
-          "type": "enum",
-          "values": ["user", "admin"],
+          "type": "string",
+          "required": true,
           "default": "user"
-        },
-        "createdAt": {
-          "type": "timestamp",
-          "generated": "createdAt"
-        },
-        "updatedAt": {
-          "type": "timestamp",
-          "generated": "updatedAt"
         }
       },
+      "indexes": [
+        {
+          "name": "idx_users_email",
+          "fields": [
+            "email"
+          ],
+          "unique": true
+        }
+      ],
       "crud": {
         "create": {
-          "enabled": true,
-          "method": "POST",
-          "path": "/users",
-          "auth": true,
-          "permissions": ["user:create"]
+          "enabled": true
         },
         "get": {
-          "enabled": true,
-          "method": "GET",
-          "path": "/users/:id",
-          "auth": true
+          "enabled": true
         },
         "list": {
-          "enabled": true,
-          "method": "GET",
-          "path": "/users",
-          "auth": true
+          "enabled": true
         }
       }
     },
-    "task": {
+    "Task": {
       "table": "tasks",
       "fields": {
         "id": {
@@ -99,103 +77,60 @@
         },
         "title": {
           "type": "string",
-          "required": true,
-          "minLength": 1,
-          "maxLength": 200
+          "required": true
         },
         "description": {
-          "type": "text",
-          "required": false
+          "type": "string"
         },
         "status": {
-          "type": "enum",
-          "values": ["todo", "in_progress", "completed", "archived"],
-          "default": "todo"
+          "type": "string",
+          "required": true,
+          "default": "pending"
         },
         "priority": {
-          "type": "integer",
+          "type": "string",
           "required": true,
-          "default": 1
+          "default": "medium"
         },
         "userId": {
           "type": "uuid",
           "required": true,
           "references": {
-            "entity": "user",
+            "entity": "User",
             "field": "id"
           }
-        },
-        "createdAt": {
-          "type": "timestamp",
-          "generated": "createdAt"
-        },
-        "updatedAt": {
-          "type": "timestamp",
-          "generated": "updatedAt"
         }
       },
       "indexes": [
         {
-          "name": "tasks_user_status_idx",
-          "fields": ["userId", "status"]
+          "name": "idx_tasks_status",
+          "fields": [
+            "status"
+          ]
         }
       ],
       "crud": {
         "create": {
-          "enabled": true,
-          "method": "POST",
-          "path": "/tasks",
-          "auth": true,
-          "idempotency": true
+          "enabled": true
         },
         "get": {
-          "enabled": true,
-          "method": "GET",
-          "path": "/tasks/:id",
-          "auth": true
+          "enabled": true
         },
         "list": {
-          "enabled": true,
-          "method": "GET",
-          "path": "/tasks",
-          "auth": true,
-          "pagination": {
-            "type": "cursor",
-            "defaultLimit": 20,
-            "maximumLimit": 50
-          },
-          "filter": ["status", "userId"],
-          "sort": ["createdAt", "priority"]
+          "enabled": true
         },
         "update": {
-          "enabled": true,
-          "method": "PATCH",
-          "path": "/tasks/:id",
-          "auth": true,
-          "concurrency": {
-            "mode": "updatedAt"
-          }
+          "enabled": true
         },
         "delete": {
-          "enabled": true,
-          "method": "DELETE",
-          "path": "/tasks/:id",
-          "auth": true,
-          "mode": "soft"
+          "enabled": true
         }
       }
     }
   },
-  "storage": {
-    "provider": "backblaze-b2",
-    "uploadMode": "presigned-url",
-    "publicBaseUrl": "https://media.example.com",
-    "maximumUploadBytes": 5242880,
-    "allowedMimeTypes": ["image/jpeg", "image/png", "application/pdf"]
-  },
-  "email": {
-    "provider": "resend",
-    "execution": "queue-only"
+  "events": {
+    "queueBinding": "DOMAIN_EVENTS",
+    "deadLetterQueueBinding": "DOMAIN_EVENTS_DLQ"
   },
   "webhooks": {
     "stripe": {
@@ -205,29 +140,16 @@
         "secretBinding": "STRIPE_WEBHOOK_SECRET"
       },
       "queue": "DOMAIN_EVENTS",
-      "responseStatus": 202
+      "responseStatus": 200
     }
   },
   "scheduled": {
     "cleanupExpiredTasks": {
-      "cron": "0 0 * * *",
-      "description": "Archive completed tasks older than 30 days"
+      "cron": "0 2 * * *",
+      "description": "Purge soft-deleted task records older than 30 days"
     }
   },
   "observability": {
-    "correlationHeader": "x-correlation-id",
-    "structuredLogs": true,
-    "provider": "none",
-    "transport": "console",
-    "profile": "free"
-  },
-  "budgets": {
-    "request": {
-      "maximumDatabaseQueries": 3,
-      "maximumKvReads": 2,
-      "maximumKvWrites": 0,
-      "maximumQueueWrites": 2,
-      "maximumB2Operations": 1
-    }
+    "correlationHeader": "x-correlation-id"
   }
 }

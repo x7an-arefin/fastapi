@@ -1,0 +1,69 @@
+{
+  "name": "task-master-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "YOUR_HYPERDRIVE_ID_HERE"
+    }
+  ],
+
+  "kv_namespaces": [
+    {
+      "binding": "AUTH_SESSION_KV",
+      "id": "YOUR_KV_NAMESPACE_ID_HERE"
+    },
+    {
+      "binding": "RATE_LIMIT_KV",
+      "id": "YOUR_RATE_LIMIT_KV_ID_HERE"
+    }
+  ],
+
+  "queues": {
+    "producers": [
+      {
+        "binding": "DOMAIN_EVENTS",
+        "queue": "task-master-api-domain-events"
+      },
+      {
+        "binding": "DOMAIN_EVENTS_DLQ",
+        "queue": "task-master-api-domain-events-dlq"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "task-master-api-domain-events",
+        "max_batch_size": 100,
+        "max_batch_timeout": 5,
+        "max_retries": 3,
+        "dead_letter_queue": "task-master-api-domain-events-dlq"
+      }
+    ]
+  },
+
+  "triggers": {
+    "crons": [
+      "0 2 * * *"
+    ]
+  },
+
+  "vars": {
+    "ENVIRONMENT": "development"
+  },
+
+  "env": {
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging"
+      }
+    },
+    "production": {
+      "vars": {
+        "ENVIRONMENT": "production"
+      }
+    }
+  }
+}

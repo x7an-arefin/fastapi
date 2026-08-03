@@ -13,6 +13,7 @@ export interface ApplicationIR {
   scheduled: ScheduledJobIR[];
   observability: ObservabilityIR;
   budgets: BudgetPolicyIR;
+  security: SecurityIR;
 }
 
 export interface ApplicationMetaIR {
@@ -97,6 +98,9 @@ export interface ReferenceIR {
   entityName: string;
   fieldName: string;
   tableName: string;
+  onDelete: 'cascade' | 'set-null' | 'restrict' | 'no-action';
+  onUpdate: 'cascade' | 'set-null' | 'restrict' | 'no-action';
+  relation: 'many-to-one' | 'one-to-one';
 }
 
 export interface IndexIR {
@@ -209,5 +213,22 @@ export interface BudgetPolicyIR {
     maximumKvWrites: number;
     maximumQueueWrites: number;
     maximumB2Operations: number;
+  };
+}
+
+export interface SecurityIR {
+  defaultAuth: boolean;
+  cors: {
+    origins: string[];
+    methods: string[];
+    credentials: boolean;
+    maxAge: number;
+  };
+  rateLimit: {
+    enabled: boolean;
+    windowMs: number;
+    maxRequests: number;
+    store: 'memory' | 'kv';
+    kvBinding: string;
   };
 }

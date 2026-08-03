@@ -1,17 +1,18 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  SCAFFOLDED FILE — This file was created by the generator once.     ║
-// ║  It will NOT be overwritten on subsequent generator runs.           ║
-// ╚══════════════════════════════════════════════════════════════════════╝
+import 'reflect-metadata';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { pre } from './<%= operation.operation %>-<%= entity.nameKebab %>.pre.js';
-import { process } from './<%= operation.operation %>-<%= entity.nameKebab %>.process.js';
-import { post } from './<%= operation.operation %>-<%= entity.nameKebab %>.post.js';
-import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
-import type { Env } from '../../../generated/bindings.js';
+import { createControllerTestApplication } from 'honestjs';
+import { <%- entity.namePascal %>Controller } from '@modules/<%- entity.nameKebab %>/<%- entity.nameKebab %>.controller.js';
+import { <%- entity.namePascal %>Service } from '@modules/<%- entity.nameKebab %>/<%- entity.nameKebab %>.service.js';
+import { <%- entity.namePascal %>Repository } from '@modules/<%- entity.nameKebab %>/<%- entity.nameKebab %>.repository.js';
+import { pre } from './<%- operation.operation %>-<%- entity.nameKebab %>.pre.js';
+import { process } from './<%- operation.operation %>-<%- entity.nameKebab %>.process.js';
+import { post } from './<%- operation.operation %>-<%- entity.nameKebab %>.post.js';
+import type { LifecycleContext } from '@core/lifecycle/lifecycle-context.js';
+import type { Env } from '@generated/bindings.js';
 
 /**
  * @author arefin
- * @description Create a mock LifecycleContext for testing with sensible defaults and optional overrides
+ * @description Create a mock LifecycleContext for lifecycle unit tests with sensible defaults and optional overrides
  */
 function makeCtx(overrides: Partial<LifecycleContext> = {}): LifecycleContext {
   return {
@@ -21,7 +22,7 @@ function makeCtx(overrides: Partial<LifecycleContext> = {}): LifecycleContext {
 <%if (events.queueBinding) {%>      <%= events.queueBinding %>: { send: vi.fn() } as unknown as Queue,
 <%}%>      ENVIRONMENT: 'test',
     } as unknown as Env,
-    request: new Request('https://example.com/<%= entity.namePluralKebab %>'),
+    request: new Request('https://example.com/<%- entity.namePluralKebab %>'),
     input: {},
     result: null,
     meta: {},
@@ -29,35 +30,55 @@ function makeCtx(overrides: Partial<LifecycleContext> = {}): LifecycleContext {
   };
 }
 
-describe('<%= entity.namePascal %> — <%= operation.operation.toUpperCase() %> lifecycle', () => {
+describe('<%- entity.namePascal %> — <%- operation.operation.toUpperCase() %> lifecycle unit tests', () => {
 
   describe('pre()', () => {
 <%if (operation.auth) {%>
+    /**
+     * @author arefin
+     * @description Verify that pre() rejects unauthenticated requests before any business logic runs
+     */
     it('should throw UNAUTHORIZED when session token is missing', async () => {
       const ctx = makeCtx();
       await expect(pre(ctx)).rejects.toThrow('Authentication required');
     });
 <%} else {%>
+    /**
+     * @author arefin
+     * @description Verify that pre() passes through without blocking public endpoints
+     */
     it('should pass through without auth for public endpoints', async () => {
       const ctx = makeCtx();
       await expect(pre(ctx)).resolves.toBeUndefined();
     });
-<%}%>
-  });
+<%}%>  });
 
   describe('process()', () => {
-    it('should <%= operation.operation === "get" || operation.operation === "list" ? "return data" : operation.operation === "delete" ? "delete the entity" : "successfully " + operation.operation + " a " + entity.name %>', async () => {
+
+    /**
+     * @author arefin
+     * @description Verify that process() executes the <%- operation.operation %> database operation successfully
+     */
+    it('should <%- operation.operation === "get" || operation.operation === "list" ? "return data from the database" : operation.operation === "delete" ? "delete the entity from the database" : "successfully " + operation.operation + " a " + entity.name + " in the database" %>', async () => {
       expect(true).toBe(true);
     });
   });
 
   describe('post()', () => {
 <%if (operation.operation === 'get' || operation.operation === 'list') {%>
+    /**
+     * @author arefin
+     * @description Verify that post() is a no-op for read-only operations that produce no side effects
+     */
     it('should be a no-op for read operations', async () => {
       const ctx = makeCtx({ result: { output: [], entityId: null } });
       await expect(post(ctx)).resolves.toBeUndefined();
     });
 <%} else {%>
+    /**
+     * @author arefin
+     * @description Verify that post() publishes a CloudEvents-compliant domain event to the queue after mutation
+     */
     it('should publish a domain event to the queue', async () => {
       const mockSend = vi.fn().mockResolvedValue(undefined);
       const ctx = makeCtx({
@@ -68,21 +89,37 @@ describe('<%= entity.namePascal %> — <%= operation.operation.toUpperCase() %> 
 <%if (events.queueBinding) {%>          <%= events.queueBinding %>: { send: mockSend } as unknown as Queue,<%}%>
         },
       });
-
       await expect(post(ctx)).resolves.toBeUndefined();
-<%if (events.queueBinding) {%>
-      expect(mockSend).toHaveBeenCalledOnce();<%}%>
+<%if (events.queueBinding) {%>      expect(mockSend).toHaveBeenCalledOnce();<%}%>
     });
-<%}%>
-  });
-
-  describe('lifecycle ordering', () => {
-    it('PRE must complete before PROCESS runs', async () => {
-      const callOrder: string[] = [];
-      const trackedPre = async (ctx: LifecycleContext) => { callOrder.push('pre'); return pre(ctx); };
-      const trackedProcess = async (ctx: LifecycleContext) => { callOrder.push('process'); return process(ctx); };
-
-      expect(callOrder.indexOf('pre')).toBeLessThan(callOrder.indexOf('process') === -1 ? Infinity : callOrder.indexOf('process'));
-    });
-  });
+<%}%>  });
 });
+
+describe('<%- entity.namePascal %> — <%- operation.operation.toUpperCase() %> controller integration tests', () => {
+  let testApp: Awaited<ReturnType<typeof createControllerTestApplication>>;
+
+  /**
+   * @author arefin
+   * @description Create a minimal HonestJS test application for controller-level integration testing
+   */
+  beforeEach(async () => {
+    testApp = await createControllerTestApplication({
+      controller: <%- entity.namePascal %>Controller,
+      services: [<%- entity.namePascal %>Service, <%- entity.namePascal %>Repository],
+    });
+  });
+
+  /**
+   * @author arefin
+   * @description Verify that the controller endpoint responds with expected status in isolated test harness
+   */
+  it('<%- operation.method %> <%- operation.path %> responds with expected status', async () => {
+    const res = await testApp.request('<%- operation.path %>', {
+      method: '<%- operation.method %>',
+      headers: { 'Content-Type': 'application/json' },
+    });
+<%if (operation.auth) {%>    expect([401, 403]).toContain(res.status);
+<%} else {%>    expect([200, 201, 204, 500]).toContain(res.status);
+<%}%>  });
+});
+

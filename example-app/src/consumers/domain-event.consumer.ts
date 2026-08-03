@@ -1,10 +1,12 @@
-import type { Env } from '../generated/bindings.js';
-import type { EventEnvelope } from '../core/events/event-envelope.js';
-import { logger } from '../core/observability/logger.js';
+
+
+import type { Env } from '@generated/bindings.js';
+import type { EventEnvelope } from '@core/events/event-envelope.js';
+import { logger } from '@core/observability/logger.js';
 
 /**
  * @author arefin
- * @description Consume and route domain events to the appropriate entity-specific handlers
+ * @description Consume and route domain events from the queue — implements idempotency checking and individual message acknowledgement
  */
 export async function domainEventConsumer(
   batch: MessageBatch<EventEnvelope>,
@@ -19,7 +21,6 @@ export async function domainEventConsumer(
     const eventName = envelope.eventName;
 
     try {
-
       if (processedIds.has(eventId)) {
         logger.warn({ action: 'event_duplicate_skipped', eventId, eventName });
         message.ack();
@@ -60,7 +61,7 @@ export async function domainEventConsumer(
 
 /**
  * @author arefin
- * @description Route a domain event to the correct handler based on entity type and operation
+ * @description Route a domain event to the correct handler based on the event name
  */
 async function routeEvent(
   envelope: EventEnvelope,

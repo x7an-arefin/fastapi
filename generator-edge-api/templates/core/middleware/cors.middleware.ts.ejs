@@ -1,0 +1,14 @@
+import { cors } from 'hono/cors';
+import type { MiddlewareHandler } from 'hono';
+
+/**
+ * @author arefin
+ * @description CORS middleware configured from the application security specification
+ */
+export const corsMiddleware: MiddlewareHandler = cors({
+  origin: <%- JSON.stringify(security.cors.origins.length === 1 && security.cors.origins[0] === '*' ? '*' : security.cors.origins) %>,
+  allowMethods: <%- JSON.stringify(security.cors.methods) %>,
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Correlation-ID'],
+  credentials: <%= security.cors.credentials %>,
+  maxAge: <%= security.cors.maxAge %>,
+});

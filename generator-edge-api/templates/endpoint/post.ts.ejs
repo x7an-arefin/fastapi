@@ -1,14 +1,8 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  SCAFFOLDED FILE — This file was created by the generator once.     ║
-// ║  It will NOT be overwritten on subsequent generator runs.           ║
-// ║  Edit freely — this is your business logic.                         ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-
-import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
-import type { LifecycleResult } from '../../../core/lifecycle/lifecycle-result.js';
+import type { LifecycleContext } from '@core/lifecycle/lifecycle-context.js';
+import type { LifecycleResult } from '@core/lifecycle/lifecycle-result.js';
 <%if (operation.operation !== 'get' && operation.operation !== 'list') {%>
-import { publishEvent } from '../../../core/events/event-publisher.js';
-import { <%= naming.toScreamingSnakeCase(entity.name) %>_EVENTS } from '../<%= entity.nameKebab %>.events.js';
+import { publishEvent } from '@core/events/event-publisher.js';
+import { <%= naming.toScreamingSnakeCase(entity.name) %>_EVENTS } from '@modules/<%= entity.nameKebab %>/<%= entity.nameKebab %>.events.js';
 <%}%>
 
 /**

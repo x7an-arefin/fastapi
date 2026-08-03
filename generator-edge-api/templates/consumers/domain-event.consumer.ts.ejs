@@ -1,10 +1,37 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ╚══════════════════════════════════════════════════════════════════════╝
+import type { Env } from '@generated/bindings.js';
+import type { EventEnvelope } from '@core/events/event-envelope.js';
+import { logger } from '@core/observability/logger.js';
 
-import type { Env } from '../generated/bindings.js';
-import type { EventEnvelope } from '../core/events/event-envelope.js';
-import { logger } from '../core/observability/logger.js';
+type EventHandler = (envelope: EventEnvelope, env: Env, ctx: ExecutionContext) => Promise<void>;
+
+<% for (const entity of entities) { %>
+<% for (const op of entity.operations) { %>
+<% if (['create', 'update', 'delete'].includes(op.operation)) { %>
+/**
+ * @author arefin
+ * @description Handle <%= op.domainEventName %> domain events — extend with downstream side-effect logic
+ */
+async function handle<%= entity.namePascal %><%= naming.toPascalCase(op.operation) %>d(envelope: EventEnvelope, env: Env, _ctx: ExecutionContext): Promise<void> {
+  logger.info({
+    action: 'handle_<%= entity.nameKebab %>_<%= op.operation %>d',
+    eventId: envelope.eventId,
+    subjectId: envelope.subject?.id,
+  });
+}
+
+<% } %>
+<% } %>
+<% } %>
+
+const EVENT_HANDLERS: Record<string, EventHandler> = {
+<% for (const entity of entities) { %>
+<% for (const op of entity.operations) { %>
+<% if (['create', 'update', 'delete'].includes(op.operation)) { %>
+  '<%= op.domainEventName %>': handle<%= entity.namePascal %><%= naming.toPascalCase(op.operation) %>d,
+<% } %>
+<% } %>
+<% } %>
+};
 
 /**
  * @author arefin
@@ -19,8 +46,7 @@ export async function domainEventConsumer(
 
   for (const message of batch.messages) {
     const envelope = message.body;
-    const eventId = envelope.eventId;
-    const eventName = envelope.eventName;
+    const { eventId, eventName } = envelope;
 
     try {
       if (processedIds.has(eventId)) {
@@ -37,40 +63,25 @@ export async function domainEventConsumer(
         subjectId: envelope.subject?.id,
       });
 
-      await routeEvent(envelope, env, ctx);
+      const handler = EVENT_HANDLERS[eventName];
+      if (handler) {
+        await handler(envelope, env, ctx);
+      } else {
+        logger.warn({ action: 'event_no_handler', eventName });
+      }
 
       processedIds.add(eventId);
       message.ack();
 
-      logger.info({
-        action: 'event_processed',
-        eventId,
-        eventName,
-      });
+      logger.info({ action: 'event_processed', eventId, eventName });
     } catch (err) {
       logger.error({
         action: 'event_processing_failed',
         eventId,
         eventName,
         error: String(err),
-        stack: err instanceof Error ? err.stack : undefined,
       });
-
       message.retry();
     }
   }
-}
-
-/**
- * @author arefin
- * @description Route a domain event to the correct handler based on the event name
- */
-async function routeEvent(
-  envelope: EventEnvelope,
-  env: Env,
-  ctx: ExecutionContext
-): Promise<void> {
-  const { eventName } = envelope;
-
-  logger.info({ action: 'event_routed', eventName, note: 'no handler registered yet' });
 }

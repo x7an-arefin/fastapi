@@ -15,23 +15,20 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-export const statusEnum = pgEnum('tasks_status', ['todo', 'in_progress', 'completed', 'archived']);
 
 export const taskTable = pgTable(
   'tasks',
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    title: varchar("title", { length: 200 }).notNull(),
-    description: text("description"),
-    status: statusEnum('status').default('todo'),
-    priority: integer("priority").notNull().default(1),
+    title: varchar("title", { length: 255 }).notNull(),
+    description: varchar("description", { length: 255 }),
+    status: varchar("status", { length: 255 }).notNull().default('pending'),
+    priority: varchar("priority", { length: 255 }).notNull().default('medium'),
     userId: uuid("user_id").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 
   },
   (table) => ({
-    tasks_user_status_idx: index('tasks_user_status_idx').on(table.userId, table.status),
+    idx_tasks_status: index('idx_tasks_status').on(table.status),
   })
 );
 

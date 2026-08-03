@@ -1,8 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Source: application.json                                           ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-
 export interface Env {
   <%= db.binding %>: Hyperdrive;
 <%if (auth && auth.session.cache === 'workers-kv') {%>
@@ -15,6 +10,9 @@ export interface Env {
 <%ir.webhooks.forEach(function(wh) {%>
   <%= wh.secretBinding %>: string;
 <%});%>
+<%if (security && security.rateLimit.enabled && security.rateLimit.store === 'kv') {%>
+  <%= security.rateLimit.kvBinding %>: KVNamespace;
+<%}%>
 
   ENVIRONMENT: string;
 }

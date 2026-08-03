@@ -22,12 +22,7 @@ export interface RenderContext {
  * @description Render an EJS template string with the provided context variables and return the output
  */
 function ejsRender(template: string, data: ejs.Data, options: ejs.Options): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderFn = (ejs as any).render ?? (ejs as any).default?.render;
-  if (typeof renderFn !== 'function') {
-    throw new Error('EJS render function not found');
-  }
-  return renderFn(template, data, options);
+  return ejs.render(template, data, options) as string;
 }
 
 /**
@@ -47,10 +42,12 @@ export function renderTemplate(templateRelPath: string, ctx: RenderContext): str
     app: ctx.ir.application,
     db: ctx.ir.database,
     events: ctx.ir.events,
+    entities: ctx.ir.entities,
     auth: ctx.ir.authentication,
     storage: ctx.ir.storage,
     email: ctx.ir.email,
     observability: ctx.ir.observability,
+    security: ctx.ir.security,
   };
 
   return ejsRender(template, ejsContext, {
@@ -77,6 +74,7 @@ export function renderString(template: string, ctx: RenderContext): string {
     storage: ctx.ir.storage,
     email: ctx.ir.email,
     observability: ctx.ir.observability,
+    security: ctx.ir.security,
   };
 
   return ejsRender(template, ejsContext, { rmWhitespace: false });

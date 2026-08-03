@@ -1,0 +1,35 @@
+import type { Env } from '@generated/bindings.js';
+
+const REQUIRED_BINDINGS: (keyof Env)[] = [
+  '<%= db.binding %>',
+<% if (auth) { %>
+  '<%= auth.session.kvBinding %>',
+<% } %>
+<% if (events.queueBinding) { %>
+  '<%= events.queueBinding %>',
+<% } %>
+<% if (security && security.rateLimit.enabled && security.rateLimit.store === 'kv') { %>
+  '<%= security.rateLimit.kvBinding %>',
+<% } %>
+];
+
+/**
+ * @author arefin
+ * @description Validate that all required Cloudflare bindings are present in the Worker environment at startup
+ */
+export function validateBindings(env: Env): void {
+  const missing: string[] = [];
+
+  for (const binding of REQUIRED_BINDINGS) {
+    if (!env[binding]) {
+      missing.push(String(binding));
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required Cloudflare bindings: ${missing.join(', ')}. ` +
+      `Check your wrangler.jsonc and Cloudflare dashboard configuration.`
+    );
+  }
+}

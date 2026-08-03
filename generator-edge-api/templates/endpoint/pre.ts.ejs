@@ -1,13 +1,7 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  SCAFFOLDED FILE — This file was created by the generator once.     ║
-// ║  It will NOT be overwritten on subsequent generator runs.           ║
-// ║  Edit freely — this is your business logic.                         ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-
-import type { LifecycleContext } from '../../../core/lifecycle/lifecycle-context.js';
-import type { LifecycleResult } from '../../../core/lifecycle/lifecycle-result.js';
-<%if (operation.auth) {%>import { verifySession, checkPermissions } from '../../../core/auth/session-cache.js';<%}%>
-import { AppError } from '../../../core/errors/application-error.js';
+import type { LifecycleContext } from '@core/lifecycle/lifecycle-context.js';
+import type { LifecycleResult } from '@core/lifecycle/lifecycle-result.js';
+<%if (operation.auth) {%>import { verifySession, checkPermissions } from '@core/auth/session-cache.js';<%}%>
+import { AppError } from '@core/errors/application-error.js';
 
 /**
  * @author arefin

@@ -1,0 +1,61 @@
+import { Service } from 'honestjs';
+import type { Context } from 'hono';
+import type { Env } from '@generated/bindings.js';
+import { runLifecycle } from '@core/lifecycle/run-lifecycle.js';
+import type { LifecycleContext } from '@core/lifecycle/lifecycle-context.js';
+import { <%- entity.namePascal %>Repository } from './<%- entity.nameKebab %>.repository.js';
+<%entity.operations.forEach(function(op){%>
+import { pre as <%- naming.toCamelCase(op.operation) %>Pre } from './<%- op.operation %>/<%- op.operation %>-<%- entity.nameKebab %>.pre.js';
+import { process as <%- naming.toCamelCase(op.operation) %>Process } from './<%- op.operation %>/<%- op.operation %>-<%- entity.nameKebab %>.process.js';
+import { post as <%- naming.toCamelCase(op.operation) %>Post } from './<%- op.operation %>/<%- op.operation %>-<%- entity.nameKebab %>.post.js';
+<%});%>
+
+/**
+ * @author arefin
+ * @description Build a LifecycleContext from the HonestJS Hono context and validated input data
+ */
+function buildContext(input: any, c: Context, operation: string, eventName: string): LifecycleContext {
+  return {
+    correlationId: c.req.header('<%= observability.correlationHeader %>') ?? crypto.randomUUID(),
+    env: ((c as any)?.env ?? {}) as Env,
+    request: c.req.raw,
+    input,
+    result: null,
+    meta: { entity: '<%- entity.name %>', operation, eventName },
+  };
+}
+
+/**
+ * @author arefin
+ * @description Format the lifecycle result into an HTTP Response based on the CRUD operation type
+ */
+function formatResponse(result: { output: unknown }, operation: string, c: Context): Response {
+  const correlationId = c.req.header('<%= observability.correlationHeader %>') ?? '';
+  if (operation === 'delete') return new Response(null, { status: 204 });
+  const status = operation === 'create' ? 201 : 200;
+  c.header('<%= observability.correlationHeader %>', correlationId);
+  return c.json({ data: result.output, correlationId }, status);
+}
+
+/**
+ * @author arefin
+ * @description Service that bridges HonestJS DI with the PRE → PROCESS → POST lifecycle engine for <%- entity.namePascal %> operations
+ */
+@Service()
+export class <%- entity.namePascal %>Service {
+  constructor(private readonly repository: <%- entity.namePascal %>Repository) {}
+<%entity.operations.forEach(function(op){%>
+  /**
+   * @author arefin
+   * @description Execute the <%- op.operation %> lifecycle (pre → process → post) for <%- entity.namePascal %> and return a formatted HTTP response
+   */
+  async <%- naming.toCamelCase(op.operation) %>(input: any, c: Context): Promise<Response> {
+    const ctx = buildContext(input, c, '<%- op.operation %>', '<%- op.domainEventName %>');
+    const result = await runLifecycle(ctx, {
+      pre: <%- naming.toCamelCase(op.operation) %>Pre,
+      process: <%- naming.toCamelCase(op.operation) %>Process,
+      post: <%- naming.toCamelCase(op.operation) %>Post,
+    });
+    return formatResponse(result, '<%- op.operation %>', c);
+  }
+<%});%>}

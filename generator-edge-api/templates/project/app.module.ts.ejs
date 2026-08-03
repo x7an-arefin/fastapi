@@ -1,0 +1,13 @@
+import { Module } from 'honestjs';
+<%ir.entities.forEach(function(entity) {%>
+import { <%- entity.namePascal %>Module } from '@modules/<%- entity.nameKebab %>/<%- entity.nameKebab %>.module.js';
+<%});%>
+
+/**
+ * @author arefin
+ * @description Root application module that imports all generated feature modules
+ */
+@Module({
+  imports: [<%- ir.entities.map(function(e){ return e.namePascal + 'Module'; }).join(', ') %>],
+})
+export class AppModule {}

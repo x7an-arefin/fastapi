@@ -55,14 +55,13 @@ export default class EndpointGenerator extends Generator {
 
   /**
    * @author arefin
-   * @description Generate all lifecycle endpoint files (route, input, output) for a single entity operation
+   * @description Generate all lifecycle files (input, output, pre, process, post, test) for a single entity operation
    */
   private _generateEndpoint(entity: EntityIR, operation: OperationIR): void {
     const ctx = { ir: this.ir, entity, operation };
     const base = `src/modules/${entity.nameKebab}/${operation.operation}`;
     const fileBase = `${operation.operation}-${entity.nameKebab}`;
 
-    this._writeGenerated(`endpoint/route.ts.ejs`, `${base}/${fileBase}.route.ts`, ctx);
     this._writeGenerated(`endpoint/input.ts.ejs`, `${base}/${fileBase}.input.ts`, ctx);
     this._writeGenerated(`endpoint/output.ts.ejs`, `${base}/${fileBase}.output.ts`, ctx);
 

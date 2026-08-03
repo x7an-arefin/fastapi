@@ -1,39 +1,36 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: <%= entity.namePascal %>                                                   ║
-// ╚══════════════════════════════════════════════════════════════════════╝
+import { Service } from 'honestjs';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { eq, and, gt, desc, asc<%if (entity.hasSoftDelete && entity.fields.some(f => f.nameCamel === 'deletedAt')){%>, isNull<%}%> } from 'drizzle-orm';
+import { eq, and, lt, desc, isNull<% if (!entity.hasSoftDelete) { %>, isNotNull<% } %> } from 'drizzle-orm';
 import type { <%= entity.namePascal %>Entity, New<%= entity.namePascal %>, Update<%= entity.namePascal %>, I<%= entity.namePascal %>Repository, List<%= entity.namePascal %>Params, List<%= entity.namePascal %>Result } from './<%= entity.nameKebab %>.types.js';
-import { <%= entity.nameCamel %>Table } from './<%= entity.nameKebab %>.schema.js';
-import { AppError } from '../../core/errors/application-error.js';
+import { <%= entity.nameKebab %>Table } from './<%= entity.nameKebab %>.schema.js';
+import { AppError } from '@core/errors/application-error.js';
 
-<%
-const hasDeletedAt = entity.fields.some(f => f.nameCamel === 'deletedAt');
-%>
+@Service()
 export class <%= entity.namePascal %>Repository implements I<%= entity.namePascal %>Repository {
-  private readonly db: ReturnType<typeof drizzle>;
 
   /**
    * @author arefin
-   * @description Initialize the repository with a Hyperdrive database connection
+   * @description Get a Drizzle database client from the Cloudflare Hyperdrive connection
    */
-  constructor(hyperdrive: Hyperdrive) {
-    this.db = drizzle(hyperdrive.connectionString, { logger: false });
+  private getDb(hyperdrive?: Hyperdrive): ReturnType<typeof drizzle> {
+    if (!hyperdrive?.connectionString) {
+      throw new AppError('MISSING_BINDING', 'Hyperdrive binding is required. Ensure HYPERDRIVE is configured in wrangler.jsonc.', 500);
+    }
+    return drizzle(hyperdrive.connectionString, { logger: false });
   }
 
   /**
    * @author arefin
    * @description Find a single <%= entity.namePascal %> entity by its unique identifier
    */
-  async findById(id: string): Promise<<%= entity.namePascal %>Entity | null> {
-    const rows = await this.db
+  async findById(id: string, hyperdrive?: Hyperdrive): Promise<<%= entity.namePascal %>Entity | null> {
+    const rows = await this.getDb(hyperdrive)
       .select()
-      .from(<%= entity.nameCamel %>Table)
+      .from(<%= entity.nameKebab %>Table)
       .where(
         and(
-          eq(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, id)<%if (entity.hasSoftDelete && hasDeletedAt) {%>,
-          isNull(<%= entity.nameCamel %>Table.deletedAt)<%}%>
+          eq(<%= entity.nameKebab %>Table.id, id)<% if (entity.hasSoftDelete) { %>,
+          isNull(<%= entity.nameKebab %>Table.deletedAt)<% } %>
         )
       )
       .limit(1);
@@ -42,52 +39,47 @@ export class <%= entity.namePascal %>Repository implements I<%= entity.namePasca
 
   /**
    * @author arefin
-   * @description Retrieve a paginated list of <%= entity.namePascal %> entities with optional filters
+   * @description Retrieve a paginated list of <%= entity.namePascal %> entities with cursor-based pagination on createdAt
    */
-  async findAll(params: List<%= entity.namePascal %>Params): Promise<List<%= entity.namePascal %>Result> {
+  async findAll(params: List<%= entity.namePascal %>Params, hyperdrive?: Hyperdrive): Promise<List<%= entity.namePascal %>Result> {
     const limit = Math.min(params.limit ?? 20, 100);
     const conditions = [];
-<%if (entity.hasSoftDelete && hasDeletedAt) {%>
-    conditions.push(isNull(<%= entity.nameCamel %>Table.deletedAt));
-<%}%>
-<%entity.operations.filter(op => op.operation === 'list').forEach(function(op) {
-  if (op.config.filterFields) {
-    op.config.filterFields.forEach(function(f) {%>
-    if (params.<%= naming.toCamelCase(f) %>) {
-      conditions.push(eq(<%= entity.nameCamel %>Table.<%= naming.toCamelCase(f) %>, params.<%= naming.toCamelCase(f) %> as any));
-    }
-<%  });
-  }
-});%>
+
+<% if (entity.hasSoftDelete) { %>
+    conditions.push(isNull(<%= entity.nameKebab %>Table.deletedAt));
+<% } %>
     if (params.cursor) {
-      conditions.push(gt(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, params.cursor));
+      conditions.push(lt(<%= entity.nameKebab %>Table.createdAt, new Date(params.cursor)));
     }
 
-    const rows = await this.db
+    const rows = await this.getDb(hyperdrive)
       .select()
-      .from(<%= entity.nameCamel %>Table)
+      .from(<%= entity.nameKebab %>Table)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>))
+      .orderBy(desc(<%= entity.nameKebab %>Table.createdAt))
       .limit(limit + 1);
 
     const hasMore = rows.length > limit;
     const items = hasMore ? rows.slice(0, limit) : rows;
-    const nextCursor = hasMore ? ((items[items.length - 1] as Record<string, unknown>)?.['<%= entity.primaryKey.nameCamel %>'] as string ?? null) : null;
+    const lastItem = items[items.length - 1] as Record<string, unknown> | undefined;
+    const nextCursor = hasMore && lastItem?.['createdAt'] instanceof Date
+      ? (lastItem['createdAt'] as Date).toISOString()
+      : null;
 
-    return { items, nextCursor: nextCursor as string | null, hasMore };
+    return { items, nextCursor, hasMore };
   }
 
   /**
    * @author arefin
    * @description Insert a new <%= entity.namePascal %> entity into the database and return the created record
    */
-  async create(data: New<%= entity.namePascal %>): Promise<<%= entity.namePascal %>Entity> {
-    const rows = await this.db
-      .insert(<%= entity.nameCamel %>Table)
-      .values(data as any)
+  async create(data: New<%= entity.namePascal %>, hyperdrive?: Hyperdrive): Promise<<%= entity.namePascal %>Entity> {
+    const rows = await this.getDb(hyperdrive)
+      .insert(<%= entity.nameKebab %>Table)
+      .values(data as never)
       .returning();
     const row = rows[0];
-    if (!row) throw new AppError('DB_INSERT_FAILED', `Failed to insert <%= entity.name %>`, 500);
+    if (!row) throw new AppError('DB_INSERT_FAILED', `Failed to insert <%= entity.namePascal %>`, 500);
     return row;
   }
 
@@ -95,39 +87,34 @@ export class <%= entity.namePascal %>Repository implements I<%= entity.namePasca
    * @author arefin
    * @description Update an existing <%= entity.namePascal %> entity and return the modified record
    */
-  async update(data: Update<%= entity.namePascal %>): Promise<<%= entity.namePascal %>Entity | null> {
-    const { <%= entity.primaryKey.nameCamel %>, ...rest } = data;
-<%if (entity.hasOptimisticConcurrency) {%>
+  async update(data: Update<%= entity.namePascal %>, hyperdrive?: Hyperdrive): Promise<<%= entity.namePascal %>Entity | null> {
+    const { id, ...rest } = data;
     const updateData = { ...rest, updatedAt: new Date() };
-<%} else {%>
-    const updateData = rest;
-<%}%>
-    const rows = await this.db
-      .update(<%= entity.nameCamel %>Table)
-      .set(updateData as any)
-      .where(eq(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, id))
+    const rows = await this.getDb(hyperdrive)
+      .update(<%= entity.nameKebab %>Table)
+      .set(updateData as never)
+      .where(eq(<%= entity.nameKebab %>Table.id, id))
       .returning();
     return rows[0] ?? null;
   }
 
   /**
    * @author arefin
-   * @description Delete a <%= entity.namePascal %> entity by its unique identifier
+   * @description <%= entity.hasSoftDelete ? 'Soft-delete a ' + entity.namePascal + ' entity by setting deletedAt timestamp' : 'Hard-delete a ' + entity.namePascal + ' entity by its unique identifier' %>
    */
-  async delete(id: string): Promise<boolean> {
-<%if (entity.hasSoftDelete && hasDeletedAt) {%>
-    const rows = await this.db
-      .update(<%= entity.nameCamel %>Table)
-      .set({ deletedAt: new Date() } as Partial<<%= entity.namePascal %>Entity>)
-      .where(eq(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, id))
+  async delete(id: string, hyperdrive?: Hyperdrive): Promise<boolean> {
+<% if (entity.hasSoftDelete) { %>
+    const rows = await this.getDb(hyperdrive)
+      .update(<%= entity.nameKebab %>Table)
+      .set({ deletedAt: new Date() } as never)
+      .where(and(eq(<%= entity.nameKebab %>Table.id, id), isNull(<%= entity.nameKebab %>Table.deletedAt)))
       .returning();
-    return rows.length > 0;
-<%} else {%>
-    const rows = await this.db
-      .delete(<%= entity.nameCamel %>Table)
-      .where(eq(<%= entity.nameCamel %>Table.<%= entity.primaryKey.nameCamel %>, id))
+<% } else { %>
+    const rows = await this.getDb(hyperdrive)
+      .delete(<%= entity.nameKebab %>Table)
+      .where(eq(<%= entity.nameKebab %>Table.id, id))
       .returning();
+<% } %>
     return rows.length > 0;
-<%}%>
   }
 }

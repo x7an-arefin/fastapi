@@ -17,7 +17,6 @@ export async function runLifecycle(
   ctx: LifecycleContext,
   handlers: LifecycleHandlers
 ): Promise<LifecycleResult> {
-
   logger.debug({ correlationId: ctx.correlationId, stage: 'pre', entity: ctx.meta['entity'], operation: ctx.meta['operation'] });
 
   const preResult = await handlers.pre(ctx);
@@ -34,7 +33,6 @@ export async function runLifecycle(
     result = await handlers.process(ctx);
     ctx.result = result;
   } catch (err) {
-
     logger.error({ correlationId: ctx.correlationId, stage: 'process', error: String(err) });
     throw err;
   }
@@ -44,7 +42,6 @@ export async function runLifecycle(
   try {
     await handlers.post(ctx);
   } catch (err) {
-
     logger.error({
       correlationId: ctx.correlationId,
       stage: 'post',

@@ -3,11 +3,11 @@ import { logger } from '../core/observability/logger.js';
 
 /**
  * @author arefin
- * @description Scheduled handler that cleans up expired tasks from the database
+ * @description Scheduled job handler for cleanupExpiredTasks — runs via Cloudflare Cron Triggers on schedule 0 2 * * *
  */
 export async function cleanupExpiredTasksHandler(env: Env): Promise<void> {
   const startTime = Date.now();
-  logger.info({ action: 'cleanup-expired-tasks_started', cron: '0 0 * * *' });
+  logger.info({ action: 'cleanup-expired-tasks_started', cron: '0 2 * * *' });
 
   try {
 

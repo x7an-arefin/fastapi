@@ -1,0 +1,32 @@
+import type { IPlugin, Application } from 'honestjs';
+import type { Hono } from 'hono';
+
+/**
+ * @author arefin
+ * @description OpenAPI Documentation Plugin — serves /openapi.json and mounts interactive Scalar API reference documentation at /docs
+ */
+export class OpenApiDocsPlugin implements IPlugin {
+  meta = { name: 'OpenApiDocsPlugin' };
+
+  /**
+   * @author arefin
+   * @description Mount OpenAPI JSON and interactive HTML docs routes after module registration
+   */
+  async afterModulesRegistered(_app: Application, hono: Hono): Promise<void> {
+    hono.get('/docs', (c) => {
+      const html = `<!html>
+<html>
+  <head>
+    <title><%= app.name %> — API Reference</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script id="api-reference" data-url="/openapi.json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>`;
+      return c.html(html);
+    });
+  }
+}

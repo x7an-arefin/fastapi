@@ -1,8 +1,3 @@
-// ╔══════════════════════════════════════════════════════════════════════╗
-// ║  GENERATED FILE — DO NOT EDIT MANUALLY                              ║
-// ║  Entity: <%= entity.namePascal %> — Event Name Constants                           ║
-// ╚══════════════════════════════════════════════════════════════════════╝
-
 export const <%= naming.toScreamingSnakeCase(entity.name) %>_EVENTS = {
 <%entity.operations.forEach(function(op) {%>
   <%= naming.toScreamingSnakeCase(op.operation) %>_PRE: '<%= op.lifecycleEventNames.pre %>',

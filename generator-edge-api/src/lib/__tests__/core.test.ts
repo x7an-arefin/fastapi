@@ -120,12 +120,12 @@ describe('dependency-graph', () => {
   it('sorts entities with no dependencies first', async () => {
     const { topologicalSort, extractEntityDependencies } = await import('../dependency-graph/index.js');
     const entities = {
-      product: { fields: { ownerId: { type: 'uuid', references: { entity: 'user', field: 'id' } } } },
-      user: { fields: { id: { type: 'uuid', primary: true } } },
+      Product: { fields: { ownerId: { type: 'uuid', references: { entity: 'User', field: 'id' } } } },
+      User: { fields: { id: { type: 'uuid', primary: true } } },
     };
     const deps = extractEntityDependencies(entities);
     const order = topologicalSort(deps);
-    expect(order.indexOf('user')).toBeLessThan(order.indexOf('product'));
+    expect(order.indexOf('User')).toBeLessThan(order.indexOf('Product'));
   });
 
   it('throws on circular dependencies', async () => {
@@ -143,7 +143,7 @@ describe('semantic-validator', () => {
     const { validateSemantics } = await import('../semantic-validator/index.js');
     const raw = {
       entities: {
-        product: {
+        Product: {
           table: 'products',
           fields: {
             id: { type: 'uuid', primary: true, generated: true },
@@ -160,7 +160,7 @@ describe('semantic-validator', () => {
     const { validateSemantics } = await import('../semantic-validator/index.js');
     const raw = {
       entities: {
-        product: {
+        Product: {
           table: 'products',
           fields: {
             id: { type: 'uuid', primary: true },
@@ -177,7 +177,7 @@ describe('semantic-validator', () => {
     const { validateSemantics } = await import('../semantic-validator/index.js');
     const raw = {
       entities: {
-        product: {
+        Product: {
           table: 'products',
           fields: {
             id: { type: 'uuid', primary: true },
@@ -211,7 +211,7 @@ describe('normalizer', () => {
         binding: 'HYPERDRIVE',
       },
       entities: {
-        product: {
+        Product: {
           table: 'products',
           fields: {
             id: { type: 'uuid', primary: true, generated: true },
@@ -231,7 +231,7 @@ describe('normalizer', () => {
     expect(ir.application.nameKebab).toBe('test-api');
     expect(ir.application.namePascal).toBe('TestApi');
     expect(ir.entities).toHaveLength(1);
-    expect(ir.entities[0]?.name).toBe('product');
+    expect(ir.entities[0]?.name).toBe('Product');
     expect(ir.entities[0]?.namePascal).toBe('Product');
     expect(ir.entities[0]?.operations).toHaveLength(2);
     expect(ir.entities[0]?.operations[0]?.operation).toBe('create');
@@ -248,7 +248,7 @@ describe('resource-budget', () => {
       application: { name: 'test', domain: 'test', apiPrefix: '/api/v1', runtime: 'cloudflare-workers', framework: 'hono', language: 'typescript' },
       database: { provider: 'cockroachdb', connection: 'hyperdrive', orm: 'drizzle', binding: 'HYPERDRIVE' },
       entities: {
-        product: {
+        Product: {
           table: 'products',
           fields: { id: { type: 'uuid', primary: true, generated: true } },
           crud: {

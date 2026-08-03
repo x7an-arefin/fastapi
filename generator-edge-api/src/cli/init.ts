@@ -1,0 +1,101 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import chalk from 'chalk';
+
+/**
+ * @author arefin
+ * @description Interactive wizard for scaffolding a new application.json specification file
+ */
+export async function initWizard(outputPath: string): Promise<void> {
+  const defaultSpec = {
+    $schema: 'https://edge-api.dev/schemas/application.schema.json',
+    specVersion: '1.0',
+    application: {
+      name: 'TaskMaster API',
+      domain: 'taskmaster-api',
+      apiPrefix: '/api/v1',
+      runtime: 'cloudflare-workers',
+      framework: 'hono',
+      language: 'typescript',
+    },
+    database: {
+      provider: 'postgresql',
+      connection: 'hyperdrive',
+      binding: 'HYPERDRIVE',
+      orm: 'drizzle',
+    },
+    authentication: {
+      provider: 'better-auth',
+      session: {
+        cache: 'workers-kv',
+        kvBinding: 'AUTH_SESSION_KV',
+      },
+    },
+    entities: {
+      User: {
+        table: 'users',
+        fields: {
+          id: { type: 'uuid', primary: true, generated: true },
+          email: { type: 'string', required: true, unique: true },
+          name: { type: 'string', required: true },
+          role: { type: 'string', required: true, default: 'user' },
+        },
+        indexes: [{ name: 'idx_users_email', fields: ['email'], unique: true }],
+        crud: {
+          create: { enabled: true },
+          get: { enabled: true },
+          list: { enabled: true },
+        },
+      },
+      Task: {
+        table: 'tasks',
+        fields: {
+          id: { type: 'uuid', primary: true, generated: true },
+          title: { type: 'string', required: true },
+          description: { type: 'string' },
+          status: { type: 'string', required: true, default: 'pending' },
+          priority: { type: 'string', required: true, default: 'medium' },
+          userId: { type: 'uuid', required: true, references: { entity: 'User', field: 'id' } },
+        },
+        indexes: [{ name: 'idx_tasks_status', fields: ['status'] }],
+        crud: {
+          create: { enabled: true },
+          get: { enabled: true },
+          list: { enabled: true },
+          update: { enabled: true },
+          delete: { enabled: true },
+        },
+      },
+    },
+    events: {
+      queueBinding: 'DOMAIN_EVENTS',
+      deadLetterQueueBinding: 'DOMAIN_EVENTS_DLQ',
+    },
+    webhooks: {
+      stripe: {
+        path: '/webhooks/stripe',
+        signature: {
+          type: 'stripe',
+          secretBinding: 'STRIPE_WEBHOOK_SECRET',
+        },
+        queue: 'DOMAIN_EVENTS',
+        responseStatus: 200,
+      },
+    },
+    scheduled: {
+      cleanupExpiredTasks: {
+        cron: '0 2 * * *',
+        description: 'Purge soft-deleted task records older than 30 days',
+      },
+    },
+    observability: {
+      correlationHeader: 'x-correlation-id',
+    },
+  };
+
+  const targetFile = path.resolve(outputPath);
+  fs.writeFileSync(targetFile, JSON.stringify(defaultSpec, null, 2), 'utf-8');
+
+  console.log(chalk.green(`\n✅ Specification scaffolded successfully at: ${targetFile}`));
+  console.log(chalk.gray('Edit this file to define your entities, endpoints, and bindings.\n'));
+}

@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "task-master-api",
+    "title": "TaskMaster API",
     "version": "1.0.0",
-    "description": "API for task-master-api — generated from application.json"
+    "description": "API for TaskMaster API — generated from application.json"
   },
   "servers": [
     {
@@ -15,15 +15,11 @@
     "/api/v1/users": {
       "post": {
         "operationId": "createUser",
-        "summary": "Create a user",
+        "summary": "Create a User",
         "tags": [
           "User"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -73,11 +69,7 @@
         "tags": [
           "User"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "in": "query",
@@ -148,15 +140,11 @@
     "/api/v1/users/{id}": {
       "get": {
         "operationId": "getUser",
-        "summary": "Get a user by ID",
+        "summary": "Get a User by ID",
         "tags": [
           "User"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "in": "path",
@@ -205,15 +193,11 @@
     "/api/v1/tasks": {
       "post": {
         "operationId": "createTask",
-        "summary": "Create a task",
+        "summary": "Create a Task",
         "tags": [
           "Task"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -263,11 +247,7 @@
         "tags": [
           "Task"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "in": "query",
@@ -338,15 +318,11 @@
     "/api/v1/tasks/{id}": {
       "get": {
         "operationId": "getTask",
-        "summary": "Get a task by ID",
+        "summary": "Get a Task by ID",
         "tags": [
           "Task"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "in": "path",
@@ -393,15 +369,11 @@
       },
       "patch": {
         "operationId": "updateTask",
-        "summary": "Update a task",
+        "summary": "Update a Task",
         "tags": [
           "Task"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "in": "path",
@@ -458,15 +430,11 @@
       },
       "delete": {
         "operationId": "deleteTask",
-        "summary": "Delete a task",
+        "summary": "Delete a Task",
         "tags": [
           "Task"
         ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "security": [],
         "parameters": [
           {
             "in": "path",
@@ -504,42 +472,6 @@
           }
         }
       }
-    },
-    "/api/v1/media/upload-url": {
-      "post": {
-        "operationId": "generateUploadUrl",
-        "summary": "Generate a presigned B2 upload URL",
-        "tags": [
-          "Media"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UploadUrlRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Presigned URL generated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UploadUrlResponse"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -549,7 +481,8 @@
         "required": [
           "id",
           "email",
-          "name"
+          "name",
+          "role"
         ],
         "properties": {
           "id": {
@@ -557,27 +490,13 @@
             "format": "uuid"
           },
           "email": {
-            "type": "string",
-            "maxLength": 255
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "maxLength": 100
+            "type": "string"
           },
           "role": {
-            "type": "string",
-            "enum": [
-              "user",
-              "admin"
-            ]
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           }
         }
       },
@@ -585,23 +504,18 @@
         "type": "object",
         "required": [
           "email",
-          "name"
+          "name",
+          "role"
         ],
         "properties": {
           "email": {
-            "type": "string",
-            "maxLength": 255
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "maxLength": 100
+            "type": "string"
           },
           "role": {
-            "type": "string",
-            "enum": [
-              "user",
-              "admin"
-            ]
+            "type": "string"
           }
         }
       },
@@ -610,19 +524,13 @@
         "minProperties": 1,
         "properties": {
           "email": {
-            "type": "string",
-            "maxLength": 255
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "maxLength": 100
+            "type": "string"
           },
           "role": {
-            "type": "string",
-            "enum": [
-              "user",
-              "admin"
-            ]
+            "type": "string"
           }
         }
       },
@@ -631,6 +539,7 @@
         "required": [
           "id",
           "title",
+          "status",
           "priority",
           "userId"
         ],
@@ -640,36 +549,20 @@
             "format": "uuid"
           },
           "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
+            "type": "string"
           },
           "description": {
             "type": "string"
           },
           "status": {
-            "type": "string",
-            "enum": [
-              "todo",
-              "in_progress",
-              "completed",
-              "archived"
-            ]
+            "type": "string"
           },
           "priority": {
-            "type": "integer"
+            "type": "string"
           },
           "userId": {
             "type": "string",
             "format": "uuid"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -677,29 +570,22 @@
         "type": "object",
         "required": [
           "title",
+          "status",
           "priority",
           "userId"
         ],
         "properties": {
           "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
+            "type": "string"
           },
           "description": {
             "type": "string"
           },
           "status": {
-            "type": "string",
-            "enum": [
-              "todo",
-              "in_progress",
-              "completed",
-              "archived"
-            ]
+            "type": "string"
           },
           "priority": {
-            "type": "integer"
+            "type": "string"
           },
           "userId": {
             "type": "string",
@@ -712,66 +598,20 @@
         "minProperties": 1,
         "properties": {
           "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
+            "type": "string"
           },
           "description": {
             "type": "string"
           },
           "status": {
-            "type": "string",
-            "enum": [
-              "todo",
-              "in_progress",
-              "completed",
-              "archived"
-            ]
+            "type": "string"
           },
           "priority": {
-            "type": "integer"
+            "type": "string"
           },
           "userId": {
             "type": "string",
             "format": "uuid"
-          }
-        }
-      },
-      "UploadUrlRequest": {
-        "type": "object",
-        "required": [
-          "filename",
-          "mimeType"
-        ],
-        "properties": {
-          "filename": {
-            "type": "string"
-          },
-          "mimeType": {
-            "type": "string"
-          },
-          "entityType": {
-            "type": "string"
-          },
-          "entityId": {
-            "type": "string"
-          }
-        }
-      },
-      "UploadUrlResponse": {
-        "type": "object",
-        "properties": {
-          "uploadUrl": {
-            "type": "string"
-          },
-          "objectKey": {
-            "type": "string"
-          },
-          "publicUrl": {
-            "type": "string"
-          },
-          "expiresIn": {
-            "type": "number"
           }
         }
       },

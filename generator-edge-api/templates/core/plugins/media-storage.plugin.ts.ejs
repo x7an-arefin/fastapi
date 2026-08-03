@@ -1,0 +1,20 @@
+import type { IPlugin, Application } from 'honestjs';
+import type { Hono } from 'hono';
+import { uploadUrlRoute, completeUploadRoute } from '@modules/media/media.routes.js';
+
+/**
+ * @author arefin
+ * @description B2 Media Storage Plugin — mounts presigned upload URL and completion endpoints
+ */
+export class B2MediaStoragePlugin implements IPlugin {
+  meta = { name: 'B2MediaStoragePlugin' };
+
+  /**
+   * @author arefin
+   * @description Mount media routes after modules are loaded
+   */
+  async afterModulesRegistered(_app: Application, hono: Hono): Promise<void> {
+    hono.post('/api/v1/media/upload-url', uploadUrlRoute as any);
+    hono.post('/api/v1/media/complete', completeUploadRoute as any);
+  }
+}

@@ -52,6 +52,9 @@ export default class EntityGenerator extends Generator {
       this._writeGenerated(`entity/types.ts.ejs`, `${base}/${entity.nameKebab}.types.ts`, ctx);
       this._writeGenerated(`entity/repository.ts.ejs`, `${base}/${entity.nameKebab}.repository.ts`, ctx);
       this._writeGenerated(`entity/events.ts.ejs`, `${base}/${entity.nameKebab}.events.ts`, ctx);
+      this._writeGenerated(`entity/module.ts.ejs`, `${base}/${entity.nameKebab}.module.ts`, ctx);
+      this._writeGenerated(`entity/controller.ts.ejs`, `${base}/${entity.nameKebab}.controller.ts`, ctx);
+      this._writeGenerated(`entity/service.ts.ejs`, `${base}/${entity.nameKebab}.service.ts`, ctx);
 
       this.log(chalk.green(`  ✅ ${entity.namePascal} (${entity.table})`));
     }

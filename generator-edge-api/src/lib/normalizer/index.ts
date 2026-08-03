@@ -22,6 +22,7 @@ import type {
   StorageIR,
   UpdateOpConfig,
   WebhookIR,
+  SecurityIR,
 } from '../ir/types.js';
 import {
   toCamelCase,
@@ -80,7 +81,7 @@ function toDrizzleColumn(field: RawSpec, fieldName: string): string {
         return `timestamp("${snakeName}", { withTimezone: true }).defaultNow().notNull()`;
       }
       if (field['generated'] === 'updatedAt') {
-        return `timestamp("${snakeName}", { withTimezone: true }).defaultNow().notNull()`;
+        return `timestamp("${snakeName}", { withTimezone: true }).defaultNow().notNull().$onUpdate(() => new Date())`;
       }
       return `timestamp("${snakeName}", { withTimezone: true })`;
 
@@ -110,7 +111,7 @@ function normalizeField(fieldName: string, raw: RawSpec, entityName: string, ent
   const isGenerated = generated !== undefined && generated !== false;
 
   let references: ReferenceIR | undefined;
-  const rawRef = raw['references'] as { entity: string; field: string } | undefined;
+  const rawRef = raw['references'] as { entity: string; field: string; onDelete?: string; onUpdate?: string; relation?: string } | undefined;
   if (rawRef) {
     const refEntity = entities[rawRef.entity] as RawSpec | undefined;
     const refTable = refEntity?.['table'] as string | undefined;
@@ -118,6 +119,9 @@ function normalizeField(fieldName: string, raw: RawSpec, entityName: string, ent
       entityName: rawRef.entity,
       fieldName: rawRef.field,
       tableName: refTable ?? pluralize(toSnakeCase(rawRef.entity)),
+      onDelete: (rawRef.onDelete as 'cascade' | 'set-null' | 'restrict' | 'no-action' | undefined) ?? 'no-action',
+      onUpdate: (rawRef.onUpdate as 'cascade' | 'set-null' | 'restrict' | 'no-action' | undefined) ?? 'no-action',
+      relation: (rawRef.relation as 'many-to-one' | 'one-to-one' | undefined) ?? 'many-to-one',
     };
   }
 
@@ -321,6 +325,20 @@ function normalizeEntity(
     normalizeField(fname, fraw, entityName, allEntities)
   );
 
+  // Auto-inject audit timestamp fields
+  const createdAtField = normalizeField('createdAt', { type: 'timestamp', generated: 'createdAt' }, entityName, allEntities);
+  const updatedAtField = normalizeField('updatedAt', { type: 'timestamp', generated: 'updatedAt' }, entityName, allEntities);
+  fields.push(createdAtField, updatedAtField);
+
+  // Compute hasSoftDelete early to decide if we inject deletedAt
+  const rawCrudForCheck = raw['crud'] as Record<string, RawSpec> | undefined;
+  const rawDeleteOp = rawCrudForCheck?.['delete'] as RawSpec | undefined;
+  const softDelete = rawDeleteOp && rawDeleteOp['enabled'] !== false && ((rawDeleteOp['mode'] as string | undefined) ?? 'soft') === 'soft';
+  if (softDelete) {
+    const deletedAtField = normalizeField('deletedAt', { type: 'timestamp' }, entityName, allEntities);
+    fields.push(deletedAtField);
+  }
+
   const primaryKey = fields.find((f) => f.primary);
   if (!primaryKey) {
     throw new Error(`Entity "${entityName}" has no primary key field`);
@@ -489,6 +507,26 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
     },
   };
 
+  const secRaw = (raw['security'] as RawSpec | undefined) ?? {};
+  const corsRaw = (secRaw['cors'] as RawSpec | undefined) ?? {};
+  const rlRaw = (secRaw['rateLimit'] as RawSpec | undefined) ?? {};
+  const security: SecurityIR = {
+    defaultAuth: (secRaw['defaultAuth'] as boolean | undefined) ?? false,
+    cors: {
+      origins: (corsRaw['origins'] as string[] | undefined) ?? ['*'],
+      methods: (corsRaw['methods'] as string[] | undefined) ?? ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+      credentials: (corsRaw['credentials'] as boolean | undefined) ?? false,
+      maxAge: (corsRaw['maxAge'] as number | undefined) ?? 86400,
+    },
+    rateLimit: {
+      enabled: (rlRaw['enabled'] as boolean | undefined) ?? true,
+      windowMs: (rlRaw['windowMs'] as number | undefined) ?? 60000,
+      maxRequests: (rlRaw['maxRequests'] as number | undefined) ?? 100,
+      store: (rlRaw['store'] as 'memory' | 'kv' | undefined) ?? 'kv',
+      kvBinding: (rlRaw['kvBinding'] as string | undefined) ?? 'RATE_LIMIT_KV',
+    },
+  };
+
   return {
     specVersion: raw['specVersion'] as string,
     application,
@@ -502,5 +540,6 @@ export function normalizeSpecification(raw: RawSpec): ApplicationIR {
     scheduled: scheduledIRs,
     observability,
     budgets,
+    security,
   };
 }

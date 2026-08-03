@@ -13,6 +13,17 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["src/core/*"],
+      "@modules/*": ["src/modules/*"],
+      "@generated/*": ["src/generated/*"],
+      "@consumers/*": ["src/consumers/*"],
+      "@webhooks/*": ["src/webhooks/*"],
+      "@scheduled/*": ["src/scheduled/*"]
+    },
     "types": ["@cloudflare/workers-types"]
   },
   "include": ["src/**/*", "worker-configuration.d.ts"],

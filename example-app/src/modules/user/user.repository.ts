@@ -1,26 +1,40 @@
+import { Service } from 'honestjs';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { eq, and, gt, desc, asc } from 'drizzle-orm';
 import type { UserEntity, NewUser, UpdateUser, IUserRepository, ListUserParams, ListUserResult } from './user.types.js';
 import { userTable } from './user.schema.js';
-import { AppError } from '../../core/errors/application-error.js';
+import { AppError } from '@core/errors/application-error.js';
 
+
+@Service()
 export class UserRepository implements IUserRepository {
-  private readonly db: ReturnType<typeof drizzle>;
+  private readonly defaultDb: ReturnType<typeof drizzle>;
 
   /**
    * @author arefin
-   * @description Initialize the class instance with required dependencies and configuration
+   * @description Initialize the repository
    */
-  constructor(hyperdrive: Hyperdrive) {
-    this.db = drizzle(hyperdrive.connectionString, { logger: false });
+  constructor() {
+    this.defaultDb = drizzle('postgresql://placeholder:placeholder@localhost:5432/placeholder', { logger: false });
   }
 
   /**
    * @author arefin
-   * @description Find a single user entity by its unique identifier
+   * @description Get Drizzle database instance, using Hyperdrive connection when available
    */
-  async findById(id: string): Promise<UserEntity | null> {
-    const rows = await this.db
+  private getDb(hyperdrive?: Hyperdrive): ReturnType<typeof drizzle> {
+    if (hyperdrive?.connectionString) {
+      return drizzle(hyperdrive.connectionString, { logger: false });
+    }
+    return this.defaultDb;
+  }
+
+  /**
+   * @author arefin
+   * @description Find a single User entity by its unique identifier
+   */
+  async findById(id: string, hyperdrive?: Hyperdrive): Promise<UserEntity | null> {
+    const rows = await this.getDb(hyperdrive)
       .select()
       .from(userTable)
       .where(
@@ -34,17 +48,18 @@ export class UserRepository implements IUserRepository {
 
   /**
    * @author arefin
-   * @description Retrieve a paginated list of user entities with optional filters
+   * @description Retrieve a paginated list of User entities with optional filters
    */
-  async findAll(params: ListUserParams): Promise<ListUserResult> {
+  async findAll(params: ListUserParams, hyperdrive?: Hyperdrive): Promise<ListUserResult> {
     const limit = Math.min(params.limit ?? 20, 100);
     const conditions = [];
+
 
     if (params.cursor) {
       conditions.push(gt(userTable.id, params.cursor));
     }
 
-    const rows = await this.db
+    const rows = await this.getDb(hyperdrive)
       .select()
       .from(userTable)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -60,28 +75,28 @@ export class UserRepository implements IUserRepository {
 
   /**
    * @author arefin
-   * @description Insert a new user entity into the database and return the created record
+   * @description Insert a new User entity into the database and return the created record
    */
-  async create(data: NewUser): Promise<UserEntity> {
-    const rows = await this.db
+  async create(data: NewUser, hyperdrive?: Hyperdrive): Promise<UserEntity> {
+    const rows = await this.getDb(hyperdrive)
       .insert(userTable)
       .values(data as any)
       .returning();
     const row = rows[0];
-    if (!row) throw new AppError('DB_INSERT_FAILED', `Failed to insert user`, 500);
+    if (!row) throw new AppError('DB_INSERT_FAILED', `Failed to insert User`, 500);
     return row;
   }
 
   /**
    * @author arefin
-   * @description Update an existing user entity and return the modified record
+   * @description Update an existing User entity and return the modified record
    */
-  async update(data: UpdateUser): Promise<UserEntity | null> {
+  async update(data: UpdateUser, hyperdrive?: Hyperdrive): Promise<UserEntity | null> {
     const { id, ...rest } = data;
 
     const updateData = rest;
 
-    const rows = await this.db
+    const rows = await this.getDb(hyperdrive)
       .update(userTable)
       .set(updateData as any)
       .where(eq(userTable.id, id))
@@ -91,11 +106,11 @@ export class UserRepository implements IUserRepository {
 
   /**
    * @author arefin
-   * @description Delete a user entity by its unique identifier and return whether the operation succeeded
+   * @description Delete a User entity by its unique identifier
    */
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string, hyperdrive?: Hyperdrive): Promise<boolean> {
 
-    const rows = await this.db
+    const rows = await this.getDb(hyperdrive)
       .delete(userTable)
       .where(eq(userTable.id, id))
       .returning();

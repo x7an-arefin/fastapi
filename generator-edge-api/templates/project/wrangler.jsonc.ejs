@@ -9,13 +9,22 @@
       "binding": "<%= db.binding %>",
       "id": "YOUR_HYPERDRIVE_ID_HERE"
     }
-  ]<%if (auth && auth.session.cache === 'workers-kv') {%>,
+  ]<%
+  const kvs = [];
+  if (auth && auth.session.cache === 'workers-kv') {
+    kvs.push({ binding: auth.session.kvBinding, id: 'YOUR_KV_NAMESPACE_ID_HERE' });
+  }
+  if (security && security.rateLimit.enabled && security.rateLimit.store === 'kv') {
+    kvs.push({ binding: security.rateLimit.kvBinding, id: 'YOUR_RATE_LIMIT_KV_ID_HERE' });
+  }
+  if (kvs.length > 0) {
+%>,
 
-  "kv_namespaces": [
+  "kv_namespaces": [<%kvs.forEach(function(kv, i) {%>
     {
-      "binding": "<%= auth.session.kvBinding %>",
-      "id": "YOUR_KV_NAMESPACE_ID_HERE"
-    }
+      "binding": "<%= kv.binding %>",
+      "id": "<%= kv.id %>"
+    }<%if (i < kvs.length - 1) {%>,<%}%><%});%>
   ]<%}%><%if (events.queueBinding) {%>,
 
   "queues": {
@@ -48,5 +57,18 @@
 
   "vars": {
     "ENVIRONMENT": "development"
+  },
+
+  "env": {
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging"
+      }
+    },
+    "production": {
+      "vars": {
+        "ENVIRONMENT": "production"
+      }
+    }
   }
 }
