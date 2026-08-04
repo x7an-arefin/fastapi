@@ -1,0 +1,8 @@
+<app-data-table
+  [columns]="columns"
+  [rows]="rows()"
+  [isLoading]="isLoading()"
+  (viewClicked)="viewClicked.emit($event)"
+  (editClicked)="editClicked.emit($event)"
+  (deleteClicked)="deleteClicked.emit($event)"
+></app-data-table>

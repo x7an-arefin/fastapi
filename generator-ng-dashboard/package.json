@@ -1,0 +1,36 @@
+{
+  "name": "generator-ng-dashboard",
+  "version": "1.0.0",
+  "description": "Yeoman generator for Angular 21+ admin dashboards from frontend.json + openapi.json",
+  "keywords": ["yeoman-generator", "angular", "dashboard", "codegen", "spartan-ng", "tailwind"],
+  "type": "module",
+  "exports": { ".": "./dist/index.js" },
+  "bin": { "ng-dashboard": "./dist/cli.js" },
+  "files": ["dist", "templates", "schemas"],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc --project tsconfig.json --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "yeoman-generator": "8.2.2",
+    "yo": "7.0.1",
+    "ejs": "3.1.10",
+    "chalk": "6.0.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "mem-fs-editor": "12.0.6",
+    "prettier": "3.9.6",
+    "glob": "11.0.0"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "@types/node": "^22.0.0",
+    "@types/ejs": "^3.1.5",
+    "@types/yeoman-generator": "^6.0.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": { "node": ">=20.0.0" }
+}

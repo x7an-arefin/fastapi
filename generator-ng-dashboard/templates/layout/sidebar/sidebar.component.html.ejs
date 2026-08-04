@@ -1,0 +1,45 @@
+<aside 
+  class="h-full border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 flex flex-col shrink-0 relative"
+  [class.w-64]="!isCollapsed()"
+  [class.w-20]="isCollapsed()"
+>
+  <!-- Logo & App Title -->
+  <div class="h-16 flex items-center border-b border-sidebar-border px-4 overflow-hidden shrink-0">
+    <div class="flex items-center gap-3 w-full">
+      <div class="w-9 h-9 rounded-lg bg-primary text-primary-foreground font-bold flex items-center justify-center shrink-0 shadow-sm">
+        <%= appName.charAt(0).toUpperCase() %>
+      </div>
+      @if (!isCollapsed()) {
+        <div class="flex flex-col truncate">
+          <span class="font-bold text-sm tracking-tight text-foreground truncate"><%= appName %></span>
+          <span class="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">Dashboard</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+    @for (item of navItems(); track item.route) {
+      <a 
+        [routerLink]="item.route" 
+        routerLinkActive="bg-sidebar-accent text-sidebar-accent-foreground font-semibold shadow-xs"
+        class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/60 transition-all group"
+        [title]="item.label"
+      >
+        <ng-icon [name]="item.icon" class="text-lg shrink-0 text-muted-foreground group-hover:text-foreground" />
+        @if (!isCollapsed()) {
+          <span class="whitespace-nowrap truncate">{{ item.label }}</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <!-- Collapse Toggle -->
+  <button 
+    (click)="toggle()"
+    class="absolute -right-3 top-20 w-6 h-6 rounded-full bg-border text-foreground flex items-center justify-center border border-background hover:bg-accent transition-colors shadow-sm"
+  >
+    <ng-icon [name]="isCollapsed() ? 'heroChevronRight' : 'heroChevronLeft'" class="text-xs" />
+  </button>
+</aside>

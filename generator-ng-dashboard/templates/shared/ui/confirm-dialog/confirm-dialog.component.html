@@ -1,0 +1,33 @@
+@if (open()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div 
+      (click)="onCancel()" 
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+    ></div>
+
+    <!-- Dialog Box -->
+    <div class="relative bg-card text-card-foreground rounded-lg shadow-2xl border border-border overflow-hidden max-w-md w-full z-10 animate-in zoom-in-95 duration-200">
+      <div class="p-6">
+        <h2 class="text-xl font-semibold tracking-tight mb-2">{{ title() }}</h2>
+        <p class="text-sm text-muted-foreground leading-relaxed">{{ message() }}</p>
+      </div>
+      <div class="bg-muted/40 px-6 py-4 flex justify-end gap-3 border-t border-border">
+        <button 
+          hlmBtn
+          variant="outline"
+          (click)="onCancel()" 
+        >
+          {{ cancelText() }}
+        </button>
+        <button 
+          hlmBtn
+          variant="destructive"
+          (click)="onConfirm()" 
+        >
+          {{ confirmText() }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

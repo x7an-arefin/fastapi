@@ -1,0 +1,36 @@
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import { DataTableComponent, type TableColumn } from '@shared/ui/data-table/data-table.component';
+import type { <%= namePascal %> } from '../data-access/models/<%= nameKebab %>.model';
+
+@Component({
+  selector: 'app-<%= nameKebab %>-table',
+  templateUrl: './<%= nameKebab %>-table.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DataTableComponent],
+})
+export class <%= namePascal %>TableComponent {
+  readonly rows = input<<%= namePascal %>[]>([]);
+  readonly isLoading = input(false);
+  
+  readonly viewClicked = output<string>();
+  readonly editClicked = output<string>();
+  readonly deleteClicked = output<string>();
+
+  protected readonly columns: TableColumn[] = [
+<% listConfig.columns.forEach(function(col) { %>
+    {
+      field: '<%= col.field %>',
+      label: '<%= col.label %>',
+      sortable: <%- col.sortable ? 'true' : 'false' %>,
+      badge: <%- col.badge ? 'true' : 'false' %>,
+<% if (col.badgeColorMap) { %>
+      badgeColorMap: <%- JSON.stringify(col.badgeColorMap) %>,
+<% } %>
+<% if (col.pipe) { %>
+      pipe: '<%= col.pipe %>',
+      pipeArgs: '<%= col.pipeArgs || '' %>',
+<% } %>
+    },
+<% }); %>
+  ];
+}

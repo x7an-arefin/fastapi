@@ -1,0 +1,17 @@
+/**
+ * @author arefin
+ * @description Domain model for <%= namePascal %> — mapped from API response DTO
+ */
+export interface <%= namePascal %> {
+  id: string;
+<% if (apiOperations.get && apiOperations.get.responseSchema && apiOperations.get.responseSchema.properties) { %>
+<% Object.entries(apiOperations.get.responseSchema.properties).forEach(([key, prop]) => { %>
+<% if (key !== 'id') { %>
+  <%= key %>: <%- prop.nullable ? (prop.type + ' | null') : prop.type %>;
+<% } %>
+<% }); %>
+<% } else { %>
+  // Add domain fields here
+  [key: string]: unknown;
+<% } %>
+}

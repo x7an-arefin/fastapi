@@ -1,0 +1,90 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Sample API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/tasks": {
+      "get": {
+        "operationId": "get_tasks",
+        "tags": ["tasks"],
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      },
+      "post": {
+        "operationId": "create_task",
+        "tags": ["tasks"],
+        "responses": {
+          "201": { "description": "Created" }
+        }
+      }
+    },
+    "/tasks/{id}": {
+      "get": {
+        "operationId": "get_task",
+        "tags": ["tasks"],
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      },
+      "put": {
+        "operationId": "update_task",
+        "tags": ["tasks"],
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      },
+      "delete": {
+        "operationId": "delete_task",
+        "tags": ["tasks"],
+        "responses": {
+          "204": { "description": "No Content" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "get_users",
+        "tags": ["users"],
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      },
+      "post": {
+        "operationId": "create_user",
+        "tags": ["users"],
+        "responses": {
+          "201": { "description": "Created" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "get_user",
+        "tags": ["users"],
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      },
+      "put": {
+        "operationId": "update_user",
+        "tags": ["users"],
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      },
+      "delete": {
+        "operationId": "delete_user",
+        "tags": ["users"],
+        "responses": {
+          "204": { "description": "No Content" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}

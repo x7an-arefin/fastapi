@@ -1,0 +1,71 @@
+<div class="flex h-full flex-col">
+  <!-- Drawer Header -->
+  <div class="flex items-center justify-between border-b border-[hsl(var(--border))] px-6 py-4">
+    <h2 class="text-lg font-semibold text-[hsl(var(--foreground))]">{{ title() }}</h2>
+  </div>
+  
+  <!-- Form Body -->
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-1 flex-col overflow-hidden">
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+<% formConfig.fields.forEach(function(field) { %>
+      <!-- Field: <%= field.name %> -->
+      <div class="space-y-1.5">
+        <label for="<%= field.name %>" class="text-sm font-medium text-[hsl(var(--foreground))]">
+          <%= field.label %><% if (field.required) { %> <span class="text-red-400">*</span><% } %>
+        </label>
+<% if (field.control === 'select') { %>
+        <select
+          id="<%= field.name %>"
+          formControlName="<%= field.name %>"
+          class="w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 py-2 text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] disabled:opacity-50"
+          [class.border-red-500]="hasError('<%= field.name %>')"
+        >
+          <option value="">Select <%= field.label %>...</option>
+<% if (field.options) { field.options.forEach(function(opt) { %>
+          <option value="<%= opt.value %>"><%= opt.label %></option>
+<% }); } %>
+        </select>
+<% } else if (field.control === 'textarea') { %>
+        <textarea
+          id="<%= field.name %>"
+          formControlName="<%= field.name %>"
+          rows="<%= field.rows || 3 %>"
+          placeholder="<%= field.placeholder || '' %>"
+          class="w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 py-2 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none disabled:opacity-50"
+          [class.border-red-500]="hasError('<%= field.name %>')"
+        ></textarea>
+<% } else { %>
+        <input
+          id="<%= field.name %>"
+          type="<%= field.inputType || 'text' %>"
+          formControlName="<%= field.name %>"
+          placeholder="<%= field.placeholder || '' %>"
+          class="w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--card))] px-3 py-2 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] disabled:opacity-50"
+          [class.border-red-500]="hasError('<%= field.name %>')"
+        />
+<% } %>
+        @if (hasError('<%= field.name %>')) {
+          <p class="text-xs text-red-400">This field is invalid.</p>
+        }
+      </div>
+<% }); %>
+    </div>
+    
+    <!-- Sticky Footer -->
+    <div class="flex items-center justify-end gap-3 border-t border-[hsl(var(--border))] px-6 py-4">
+      <button
+        type="button"
+        class="rounded-md px-4 py-2 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+        (click)="onCancel()"
+      >Cancel</button>
+      <button
+        type="submit"
+        class="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-sm font-medium text-white hover:bg-[hsl(var(--primary)/0.9)] transition-colors disabled:opacity-50"
+        [disabled]="isLoading()"
+      >
+        @if (isLoading()) { <span class="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-transparent"></span> }
+        Save <%= labelSingular %>
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,47 @@
+import { Component, ChangeDetectionStrategy, inject, input, output, OnChanges } from '@angular/core';
+import { ReactiveFormsModule, FormBuilder, Validators, type AbstractControl } from '@angular/forms';
+import type { <%= namePascal %> } from '../data-access/models/<%= nameKebab %>.model';
+import type { New<%= namePascal %>, Update<%= namePascal %> } from '../data-access/models/<%= nameKebab %>-api.types';
+
+@Component({
+  selector: 'app-<%= nameKebab %>-form',
+  templateUrl: './<%= nameKebab %>-form.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule],
+})
+export class <%= namePascal %>FormComponent implements OnChanges {
+  private readonly fb = inject(FormBuilder);
+  
+  readonly title = input.required<string>();
+  readonly initialValue = input<<%= namePascal %> | null>(null);
+  readonly isLoading = input(false);
+  
+  readonly formSubmit = output<New<%= namePascal %> | Update<%= namePascal %>>();
+  readonly cancel = output<void>();
+  
+  protected readonly form = this.fb.group({
+<% formConfig.fields.forEach(function(field) { %>
+    '<%= field.name %>': [<%= field.required ? "''" : "''" %>, [<% if (field.required) { %>Validators.required<% if (field.validators && field.validators.length) { %>, <% } %><% } %><% if (field.validators) { field.validators.forEach(function(v, i) { if (v.type === 'minLength') { %>Validators.minLength(<%= v.value %>)<% } else if (v.type === 'maxLength') { %>Validators.maxLength(<%= v.value %>)<% } else if (v.type === 'email') { %>Validators.email<% } %><% if (i < field.validators.length - 1) { %>, <% } %>}); } %>]],
+<% }); %>
+  });
+  
+  ngOnChanges(): void {
+    const val = this.initialValue();
+    if (val) this.form.patchValue(val as never);
+    else this.form.reset();
+  }
+  
+  onSubmit(): void {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    this.formSubmit.emit(this.form.getRawValue() as New<%= namePascal %>);
+  }
+  
+  onCancel(): void {
+    this.cancel.emit();
+  }
+  
+  protected hasError(field: string): boolean {
+    const control = this.form.get(field);
+    return !!(control?.invalid && control.touched);
+  }
+}

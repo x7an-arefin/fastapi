@@ -1,0 +1,23 @@
+<div class="flex h-full flex-col">
+  <!-- Detail Body -->
+  <div class="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+<% detailConfig.fields.forEach(function(field) { %>
+      <div class="space-y-1">
+        <dt class="text-sm font-medium text-[hsl(var(--muted-foreground))]"><%= field.label %></dt>
+        <dd class="text-sm text-[hsl(var(--foreground))]">
+          @if (<%= nameCamel %>().<%= field.name %> !== null && <%= nameCamel %>().<%= field.name %> !== undefined) {
+<% if (field.type === 'boolean') { %>
+            {{ <%= nameCamel %>().<%= field.name %> ? 'Yes' : 'No' }}
+<% } else { %>
+            {{ <%= nameCamel %>().<%= field.name %> }}
+<% } %>
+          } @else {
+            <span class="text-[hsl(var(--muted-foreground))] opacity-50">-</span>
+          }
+        </dd>
+      </div>
+<% }); %>
+    </div>
+  </div>
+</div>

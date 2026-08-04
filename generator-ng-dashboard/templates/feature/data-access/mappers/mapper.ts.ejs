@@ -1,0 +1,13 @@
+import type { <%= namePascal %> } from '../models/<%= nameKebab %>.model';
+
+/**
+ * @author arefin
+ * @description Maps raw API DTOs to domain models for <%= namePascal %>
+ */
+export function mapTo<%= namePascal %>(raw: Record<string, unknown>): <%= namePascal %> {
+  return raw as <%= namePascal %>;
+}
+
+export function mapTo<%= namePascal %>List(raws: Record<string, unknown>[]): <%= namePascal %>[] {
+  return raws.map(mapTo<%= namePascal %>);
+}

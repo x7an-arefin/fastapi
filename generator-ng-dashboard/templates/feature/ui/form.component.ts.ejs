@@ -1,0 +1,58 @@
+import { Component, ChangeDetectionStrategy, inject, input, output, OnChanges } from '@angular/core';
+import { ReactiveFormsModule, FormBuilder, Validators, type AbstractControl } from '@angular/forms';
+import { HlmButtonDirective } from '@shared/ui/button/hlm-button.directive';
+import { HlmInputDirective } from '@shared/ui/input/hlm-input.directive';
+import type { <%= namePascal %> } from '../data-access/models/<%= nameKebab %>.model';
+import type { New<%= namePascal %>, Update<%= namePascal %> } from '../data-access/models/<%= nameKebab %>-api.types';
+
+@Component({
+  selector: 'app-<%= nameKebab %>-form',
+  templateUrl: './<%= nameKebab %>-form.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, HlmButtonDirective, HlmInputDirective],
+})
+export class <%= namePascal %>FormComponent implements OnChanges {
+  private readonly fb = inject(FormBuilder);
+  
+  readonly title = input.required<string>();
+  readonly initialValue = input<<%= namePascal %> | null>(null);
+  readonly isLoading = input(false);
+  
+  readonly formSubmit = output<any>();
+  readonly cancel = output<void>();
+  
+  protected readonly form = this.fb.group({
+<% formConfig.fields.forEach(function(field) { %>
+    '<%= field.name %>': ['', [
+      <%- field.required ? 'Validators.required' : '' %><%- (field.required && field.validators && field.validators.length) ? ', ' : '' %><%- (field.validators || []).map(function(v) {
+        if (v.type === 'minLength') return 'Validators.minLength(' + v.value + ')';
+        if (v.type === 'maxLength') return 'Validators.maxLength(' + v.value + ')';
+        if (v.type === 'email') return 'Validators.email';
+        if (v.type === 'min') return 'Validators.min(' + v.value + ')';
+        if (v.type === 'max') return 'Validators.max(' + v.value + ')';
+        return '';
+      }).filter(Boolean).join(', ') %>
+    ]],
+<% }); %>
+  });
+  
+  ngOnChanges(): void {
+    const val = this.initialValue();
+    if (val) this.form.patchValue(val as never);
+    else this.form.reset();
+  }
+  
+  onSubmit(): void {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    this.formSubmit.emit(this.form.getRawValue() as New<%= namePascal %>);
+  }
+  
+  onCancel(): void {
+    this.cancel.emit();
+  }
+  
+  protected hasError(field: string): boolean {
+    const control = this.form.get(field);
+    return !!(control?.invalid && control.touched);
+  }
+}

@@ -1,0 +1,24 @@
+/**
+ * @author arefin
+ * @description API DTO types for <%= namePascal %> — used for HTTP requests
+ */
+
+export interface New<%= namePascal %> {
+<% if (apiOperations.create && apiOperations.create.requestBodySchema && apiOperations.create.requestBodySchema.properties) { %>
+<% const reqProps = apiOperations.create.requestBodySchema.properties; %>
+<% const required = apiOperations.create.requestBodySchema.required || []; %>
+<% Object.entries(reqProps).forEach(([key, prop]) => { %>
+  <%= key %><%= required.includes(key) ? '' : '?' %>: <%- prop.nullable ? (prop.type + ' | null') : prop.type %>;
+<% }); %>
+<% } else { %>
+  [key: string]: unknown;
+<% } %>
+}
+
+export interface Update<%= namePascal %> extends Partial<New<%= namePascal %>> {}
+
+export interface <%= namePascal %>ListResponse {
+  items: import('./<%= nameKebab %>.model').<%= namePascal %>[];
+  nextCursor?: string | null;
+  hasMore?: boolean;
+}

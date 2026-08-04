@@ -1,0 +1,13 @@
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import type { <%= namePascal %> } from '../data-access/models/<%= nameKebab %>.model';
+import { NgIconComponent, provideIcons } from '@ng-icons/core';
+
+@Component({
+  selector: 'app-<%= nameKebab %>-detail',
+  templateUrl: './<%= nameKebab %>-detail.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgIconComponent]
+})
+export class <%= namePascal %>DetailComponent {
+  readonly <%= nameCamel %> = input.required<<%= namePascal %>>();
+}

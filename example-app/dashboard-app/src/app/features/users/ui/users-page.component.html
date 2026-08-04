@@ -1,0 +1,77 @@
+<app-page-header title="userses">
+
+  <button
+    type="button"
+    hlmBtn
+    variant="default"
+    (click)="facade.openAddDrawer()"
+  >
+    <ng-icon name="heroPlus" class="h-4 w-4" />
+    Add User
+  </button>
+
+</app-page-header>
+
+<app-users-table
+  [rows]="facade.items()"
+  [isLoading]="facade.isLoading()"
+  (viewClicked)="facade.openDetailDrawer($event)"
+  (editClicked)="facade.openEditDrawer($event)"
+  (deleteClicked)="facade.requestDeleteConfirm($event)"
+/>
+
+@if (facade.hasError()) {
+  <div class="mt-4 rounded-md bg-destructive/10 border border-destructive/20 p-4 text-destructive text-sm font-medium">
+    {{ facade.errorMessage() }}
+  </div>
+}
+
+<!-- Add/Edit Drawer -->
+<app-drawer
+  [open]="facade.drawerMode() === 'add' || facade.drawerMode() === 'edit'"
+  [title]="facade.drawerMode() === 'add' ? 'Add Users' : 'Edit Users'"
+  position="right"
+  [width]="'480px'"
+  (closed)="facade.closeDrawer()"
+>
+  @if (facade.drawerMode() === 'add') {
+    <app-users-form
+      [title]="'Add Users'"
+      [isLoading]="facade.isLoading()"
+      (formSubmit)="facade.create($event)"
+      (cancel)="facade.closeDrawer()"
+    />
+  }
+  @if (facade.drawerMode() === 'edit' && facade.selected()) {
+    <app-users-form
+      [title]="'Edit Users'"
+      [initialValue]="facade.selected()!"
+      [isLoading]="facade.isLoading()"
+      (formSubmit)="facade.update(facade.selected()!.id, $event)"
+      (cancel)="facade.closeDrawer()"
+    />
+  }
+</app-drawer>
+
+<!-- Detail Drawer -->
+<app-drawer
+  [open]="facade.drawerMode() === 'detail'"
+  title="Users Details"
+  position="right"
+  [width]="'480px'"
+  (closed)="facade.closeDrawer()"
+>
+  @if (facade.drawerMode() === 'detail' && facade.selected()) {
+    <app-users-detail [users]="facade.selected()!" />
+  }
+</app-drawer>
+
+<!-- Delete Confirmation -->
+
+<app-confirm-dialog
+  [open]="facade.deleteConfirmId() !== null"
+  message="Are you sure you want to delete this Users? This action cannot be undone."
+  (confirmed)="facade.remove(facade.deleteConfirmId()!); facade.cancelDelete()"
+  (cancelled)="facade.cancelDelete()"
+/>
+

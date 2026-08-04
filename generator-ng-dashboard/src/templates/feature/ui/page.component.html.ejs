@@ -1,0 +1,76 @@
+<app-page-header title="<%= listConfig.title %>">
+<% if (listConfig.actions && listConfig.actions.headerActions && listConfig.actions.headerActions.includes('add')) { %>
+  <button
+    type="button"
+    class="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-sm font-medium text-white hover:bg-[hsl(var(--primary)/0.9)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+    (click)="facade.openAddDrawer()"
+  >
+    <ng-icon name="heroPlus" class="h-4 w-4" />
+    Add <%= labelSingular %>
+  </button>
+<% } %>
+</app-page-header>
+
+<app-<%= nameKebab %>-table
+  [rows]="facade.items()"
+  [isLoading]="facade.isLoading()"
+  (viewClicked)="facade.openDetailDrawer($event)"
+  (editClicked)="facade.openEditDrawer($event)"
+  (deleteClicked)="facade.requestDeleteConfirm($event)"
+/>
+
+@if (facade.hasError()) {
+  <div class="mt-4 rounded-md bg-red-500/10 border border-red-500/20 p-4 text-red-400 text-sm">
+    {{ facade.errorMessage() }}
+  </div>
+}
+
+<!-- Add/Edit Drawer -->
+<app-drawer
+  [open]="facade.drawerMode() === 'add' || facade.drawerMode() === 'edit'"
+  [title]="facade.drawerMode() === 'add' ? '<%= formConfig.addTitle %>' : '<%= formConfig.editTitle %>'"
+  position="<%= formConfig.drawerPosition %>"
+  [width]="'<%= formConfig.drawerWidth %>'"
+  (closed)="facade.closeDrawer()"
+>
+  @if (facade.drawerMode() === 'add') {
+    <app-<%= nameKebab %>-form
+      [title]="'<%= formConfig.addTitle %>'"
+      [isLoading]="facade.isLoading()"
+      (formSubmit)="facade.create($event)"
+      (cancel)="facade.closeDrawer()"
+    />
+  }
+  @if (facade.drawerMode() === 'edit' && facade.selected()) {
+    <app-<%= nameKebab %>-form
+      [title]="'<%= formConfig.editTitle %>'"
+      [initialValue]="facade.selected()!"
+      [isLoading]="facade.isLoading()"
+      (formSubmit)="facade.update(facade.selected()!.id, $event)"
+      (cancel)="facade.closeDrawer()"
+    />
+  }
+</app-drawer>
+
+<!-- Detail Drawer -->
+<app-drawer
+  [open]="facade.drawerMode() === 'detail'"
+  title="<%= detailConfig.title %>"
+  position="<%= detailConfig.drawerPosition %>"
+  [width]="'<%= detailConfig.drawerWidth %>'"
+  (closed)="facade.closeDrawer()"
+>
+  @if (facade.drawerMode() === 'detail' && facade.selected()) {
+    <app-<%= nameKebab %>-detail [<%= nameCamel %>]="facade.selected()!" />
+  }
+</app-drawer>
+
+<!-- Delete Confirmation -->
+<% if (deleteConfig.confirmDialog) { %>
+<app-confirm-dialog
+  [open]="facade.deleteConfirmId() !== null"
+  message="<%= deleteConfig.confirmMessage %>"
+  (confirmed)="facade.remove(facade.deleteConfirmId()!); facade.cancelDelete()"
+  (cancelled)="facade.cancelDelete()"
+/>
+<% } %>

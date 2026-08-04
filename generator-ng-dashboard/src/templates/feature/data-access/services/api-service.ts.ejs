@@ -1,0 +1,65 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import type { <%= namePascal %> } from '../models/<%= nameKebab %>.model';
+import type { New<%= namePascal %>, Update<%= namePascal %>, <%= namePascal %>ListResponse } from '../models/<%= nameKebab %>-api.types';
+
+@Injectable({ providedIn: 'root' })
+export class <%= namePascal %>ApiService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiBaseUrl}/<%= namePluralKebab %>`;
+  
+<% if (apiOperations.list) { %>
+  async list(cursor?: string, limit = 20): Promise<{ ok: true; data: <%= namePascal %>ListResponse } | { ok: false; error: string }> {
+    try {
+      let params = new HttpParams().set('limit', limit);
+      if (cursor) params = params.set('cursor', cursor);
+      const data = await firstValueFrom(this.http.get<<%= namePascal %>ListResponse>(this.baseUrl, { params }));
+      return { ok: true, data };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+<% } %>
+<% if (apiOperations.get) { %>
+  async getById(id: string): Promise<{ ok: true; data: <%= namePascal %> } | { ok: false; error: string }> {
+    try {
+      const data = await firstValueFrom(this.http.get<<%= namePascal %>>(`${this.baseUrl}/${id}`));
+      return { ok: true, data };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+<% } %>
+<% if (apiOperations.create) { %>
+  async create(dto: New<%= namePascal %>): Promise<{ ok: true; data: <%= namePascal %> } | { ok: false; error: string }> {
+    try {
+      const data = await firstValueFrom(this.http.post<<%= namePascal %>>(this.baseUrl, dto));
+      return { ok: true, data };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+<% } %>
+<% if (apiOperations.update) { %>
+  async update(id: string, dto: Update<%= namePascal %>): Promise<{ ok: true; data: <%= namePascal %> } | { ok: false; error: string }> {
+    try {
+      const data = await firstValueFrom(this.http.patch<<%= namePascal %>>(`${this.baseUrl}/${id}`, dto));
+      return { ok: true, data };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+<% } %>
+<% if (apiOperations.delete) { %>
+  async remove(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    try {
+      await firstValueFrom(this.http.delete(`${this.baseUrl}/${id}`));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message };
+    }
+  }
+<% } %>
+}

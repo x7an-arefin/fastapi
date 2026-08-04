@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["specVersion", "app", "api", "auth", "theme", "sidebar", "modules"],
+  "properties": {
+    "specVersion": { "type": "string" },
+    "app": {
+      "type": "object",
+      "required": ["name", "title", "baseHref", "defaultRoute"],
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "baseHref": { "type": "string" },
+        "defaultRoute": { "type": "string" }
+      }
+    },
+    "api": {
+      "type": "object",
+      "required": ["baseUrl", "openApiSpec"],
+      "properties": {
+        "baseUrl": { "type": "string" },
+        "openApiSpec": { "type": "string" }
+      }
+    },
+    "auth": {
+      "type": "object",
+      "required": ["provider", "baseUrl", "sessionRefetchOnFocus", "sessionRefetchInterval", "loginRedirect", "logoutRedirect"],
+      "properties": {
+        "provider": { "type": "string" },
+        "baseUrl": { "type": "string" },
+        "sessionRefetchOnFocus": { "type": "boolean" },
+        "sessionRefetchInterval": { "type": "number" },
+        "loginRedirect": { "type": "string" },
+        "logoutRedirect": { "type": "string" }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "required": ["mode", "primaryColor", "accentColor", "radius", "fontFamily"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["dark", "light", "system"] },
+        "primaryColor": { "type": "string" },
+        "accentColor": { "type": "string" },
+        "radius": { "type": "string" },
+        "fontFamily": { "type": "string" }
+      }
+    },
+    "sidebar": {
+      "type": "object",
+      "required": ["collapsible", "defaultOpen", "items"],
+      "properties": {
+        "collapsible": { "type": "boolean" },
+        "defaultOpen": { "type": "boolean" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "icon": { "type": "string" },
+              "module": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "modules": {
+      "type": "object",
+      "additionalProperties": { "type": "object" }
+    }
+  }
+}

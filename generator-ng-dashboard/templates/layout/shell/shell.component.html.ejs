@@ -1,0 +1,43 @@
+<div class="flex h-screen overflow-hidden bg-background text-foreground font-sans">
+  <!-- Sidebar -->
+  <app-sidebar [navItems]="[
+<% sidebar.items.forEach(function(item) { %>
+    { label: '<%= item.label %>', icon: '<%= item.icon %>', route: '<%= item.route %>' },
+<% }); %>
+  ]"></app-sidebar>
+
+  <!-- Main Area -->
+  <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+    <!-- Topbar -->
+    <header class="h-16 border-b border-border bg-card/50 backdrop-blur-md flex items-center justify-between px-6 shrink-0 z-10">
+      <div class="flex items-center gap-3">
+        <span class="font-semibold text-sm text-muted-foreground">Admin Workspace</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3 pl-4 border-l border-border">
+          <div class="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center text-xs font-semibold">
+            {{ auth.user()?.name?.charAt(0) || 'A' }}
+          </div>
+          <div class="flex flex-col text-left text-xs">
+            <span class="font-medium text-foreground">{{ auth.user()?.name || 'Admin User' }}</span>
+            <span class="text-muted-foreground text-[10px]">{{ auth.user()?.email || 'admin@domain.com' }}</span>
+          </div>
+        </div>
+        <button 
+          (click)="auth.signOut()" 
+          class="p-2 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          title="Sign Out"
+        >
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Body -->
+    <main class="flex-1 overflow-y-auto p-6 bg-background">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>

@@ -1,0 +1,8 @@
+<div class="space-y-4 text-sm">
+<% (detailConfig.fields || []).forEach(function(f) { %>
+  <div class="p-3.5 rounded-lg bg-muted/40 border border-border/50">
+    <span class="text-xs font-semibold uppercase text-muted-foreground block mb-1"><%= f %></span>
+    <span class="text-foreground font-medium text-base">{{ <%= nameCamel %>.<%= f %> || 'N/A' }}</span>
+  </div>
+<% }); %>
+</div>

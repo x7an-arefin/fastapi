@@ -1,0 +1,12 @@
+@use './design-tokens';
+@use './base';
+@import 'tailwindcss';
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  * {
+    box-sizing: border-box;
+  }
+}

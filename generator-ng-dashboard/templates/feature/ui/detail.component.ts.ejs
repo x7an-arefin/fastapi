@@ -1,0 +1,12 @@
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import type { <%= namePascal %> } from '../data-access/models/<%= nameKebab %>.model';
+
+@Component({
+  selector: 'app-<%= nameKebab %>-detail',
+  templateUrl: './<%= nameKebab %>-detail.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: []
+})
+export class <%= namePascal %>DetailComponent {
+  readonly <%= nameCamel %> = input.required<<%= namePascal %>>();
+}

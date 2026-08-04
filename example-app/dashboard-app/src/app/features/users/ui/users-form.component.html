@@ -1,0 +1,94 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
+
+  <div class="space-y-1.5">
+    <label for="email" class="text-xs font-semibold text-foreground tracking-wide uppercase">
+      Email<span class="text-destructive ml-1">*</span>
+    </label>
+
+
+    <input 
+      hlmInput
+      id="email" 
+      type="email" 
+      formControlName="email" 
+      placeholder=""
+      class="w-full"
+    />
+
+
+    @if (hasError('email')) {
+      <p class="text-xs text-destructive mt-1 font-medium">
+        Email is required or invalid.
+      </p>
+    }
+  </div>
+
+  <div class="space-y-1.5">
+    <label for="name" class="text-xs font-semibold text-foreground tracking-wide uppercase">
+      Name<span class="text-destructive ml-1">*</span>
+    </label>
+
+
+    <input 
+      hlmInput
+      id="name" 
+      type="text" 
+      formControlName="name" 
+      placeholder=""
+      class="w-full"
+    />
+
+
+    @if (hasError('name')) {
+      <p class="text-xs text-destructive mt-1 font-medium">
+        Name is required or invalid.
+      </p>
+    }
+  </div>
+
+  <div class="space-y-1.5">
+    <label for="role" class="text-xs font-semibold text-foreground tracking-wide uppercase">
+      Role<span class="text-destructive ml-1">*</span>
+    </label>
+
+
+    <input 
+      hlmInput
+      id="role" 
+      type="text" 
+      formControlName="role" 
+      placeholder=""
+      class="w-full"
+    />
+
+
+    @if (hasError('role')) {
+      <p class="text-xs text-destructive mt-1 font-medium">
+        Role is required or invalid.
+      </p>
+    }
+  </div>
+
+
+  <div class="pt-4 border-t border-border flex justify-end gap-3">
+    <button 
+      type="button" 
+      hlmBtn
+      variant="outline"
+      (click)="onCancel()" 
+    >
+      Cancel
+    </button>
+    <button 
+      type="submit" 
+      hlmBtn
+      variant="default"
+      [disabled]="isLoading()"
+    >
+      @if (isLoading()) {
+        <span class="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-1"></span>
+      }
+      Save User
+    </button>
+  </div>
+</form>

@@ -1,0 +1,34 @@
+@if (isVisible()) {
+  <div class="fixed inset-0 z-50 flex justify-end">
+    <!-- Backdrop -->
+    <div 
+      (click)="close()" 
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200"
+      [class.opacity-100]="isAnimating()"
+      [class.opacity-0]="!isAnimating()"
+    ></div>
+
+    <!-- Drawer Content Panel -->
+    <div 
+      class="relative w-full max-w-md bg-card text-card-foreground border-l border-border shadow-2xl flex flex-col h-full z-10 transition-transform duration-300"
+      [class.translate-x-0]="isAnimating()"
+      [class.translate-x-full]="!isAnimating()"
+    >
+      <!-- Header -->
+      <div class="h-16 px-6 border-b border-border flex items-center justify-between shrink-0">
+        <h2 class="text-base font-semibold tracking-tight text-foreground">{{ title() }}</h2>
+        <button 
+          (click)="close()" 
+          class="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+        >
+          <ng-icon name="heroXMark" class="text-lg" />
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        <ng-content />
+      </div>
+    </div>
+  </div>
+}

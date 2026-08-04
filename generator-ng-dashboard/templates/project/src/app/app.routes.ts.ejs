@@ -1,0 +1,24 @@
+import { Routes } from '@angular/router';
+import { authGuard } from '@core/auth/auth.guard';
+
+export const appRoutes: Routes = [
+  {
+    path: '',
+    loadComponent: () => import('@app/layout/shell/shell.component').then(m => m.ShellComponent),
+    canActivate: [authGuard],
+    children: [
+<% modules.forEach(function(mod) { %>
+      {
+        path: '<%= mod.route.replace("/", "") %>',
+        loadChildren: () => import('@app/features/<%= mod.nameKebab %>/<%= mod.nameKebab %>.routes').then(m => m.<%= mod.namePascal %>Routes),
+      },
+<% }); %>
+      { path: '', redirectTo: '<%= defaultRoute.replace("/", "") %>', pathMatch: 'full' },
+    ],
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('@app/pages/login/login-page.component').then(m => m.LoginPageComponent),
+  },
+  { path: '**', loadComponent: () => import('@app/pages/not-found/not-found.component').then(m => m.NotFoundComponent) },
+];

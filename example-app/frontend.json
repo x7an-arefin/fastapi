@@ -1,0 +1,70 @@
+{
+  "specVersion": "1.0",
+  "app": {
+    "name": "taskmaster-dashboard",
+    "title": "TaskMaster Dashboard",
+    "baseHref": "/",
+    "defaultRoute": "/tasks"
+  },
+  "api": {
+    "baseUrl": "https://your-worker.workers.dev/api/v1",
+    "openApiSpec": "./openapi.json"
+  },
+  "auth": {
+    "provider": "jwt",
+    "baseUrl": "https://your-worker.workers.dev/auth",
+    "sessionRefetchOnFocus": true,
+    "sessionRefetchInterval": 300000,
+    "loginRedirect": "/tasks",
+    "logoutRedirect": "/login"
+  },
+  "theme": {
+    "mode": "system",
+    "primaryColor": "#3b82f6",
+    "accentColor": "#8b5cf6",
+    "radius": "0.5rem",
+    "fontFamily": "Inter, sans-serif"
+  },
+  "sidebar": {
+    "collapsible": true,
+    "defaultOpen": true,
+    "items": [
+      {
+        "label": "Tasks",
+        "icon": "check-square",
+        "module": "tasks"
+      },
+      {
+        "label": "Users",
+        "icon": "users",
+        "module": "users"
+      }
+    ]
+  },
+  "modules": {
+    "tasks": {
+      "label": "Tasks",
+      "labelSingular": "Task",
+      "route": "tasks",
+      "icon": "check-square",
+      "api": {
+        "list": "listTask",
+        "create": "createTask",
+        "get": "getTask",
+        "update": "updateTask",
+        "delete": "deleteTask"
+      }
+    },
+    "users": {
+      "label": "Users",
+      "labelSingular": "User",
+      "route": "users",
+      "icon": "users",
+      "api": {
+        "list": "listUser",
+        "create": "createUser",
+        "get": "getUser"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
+import { <%= namePascal %>Facade } from '../data-access/<%= nameKebab %>.facade';
+import { <%= namePascal %>TableComponent } from './<%= nameKebab %>-table.component';
+import { <%= namePascal %>FormComponent } from './<%= nameKebab %>-form.component';
+import { <%= namePascal %>DetailComponent } from './<%= nameKebab %>-detail.component';
+import { DrawerComponent } from '@shared/ui/drawer/drawer.component';
+import { ConfirmDialogComponent } from '@shared/ui/confirm-dialog/confirm-dialog.component';
+import { PageHeaderComponent } from '@shared/ui/page-header/page-header.component';
+import { HlmButtonDirective } from '@shared/ui/button/hlm-button.directive';
+import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { heroPlus } from '@ng-icons/heroicons/outline';
+
+@Component({
+  selector: 'app-<%= nameKebab %>-page',
+  templateUrl: './<%= nameKebab %>-page.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [<%= namePascal %>TableComponent, <%= namePascal %>FormComponent, <%= namePascal %>DetailComponent, DrawerComponent, ConfirmDialogComponent, PageHeaderComponent, HlmButtonDirective, NgIconComponent],
+  viewProviders: [provideIcons({ heroPlus })],
+})
+export class <%= namePascal %>PageComponent implements OnInit {
+  protected readonly facade = inject(<%= namePascal %>Facade);
+  
+  ngOnInit(): void {
+    this.facade.loadAll();
+  }
+}

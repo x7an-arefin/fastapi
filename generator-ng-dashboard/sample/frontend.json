@@ -1,0 +1,72 @@
+{
+  "specVersion": "1.0",
+  "app": {
+    "name": "sample-dashboard",
+    "title": "Sample Dashboard",
+    "baseHref": "/",
+    "defaultRoute": "/dashboard"
+  },
+  "api": {
+    "baseUrl": "http://localhost:8000/api/v1",
+    "openApiSpec": "./openapi.json"
+  },
+  "auth": {
+    "provider": "jwt",
+    "baseUrl": "http://localhost:8000/auth",
+    "sessionRefetchOnFocus": true,
+    "sessionRefetchInterval": 300000,
+    "loginRedirect": "/dashboard",
+    "logoutRedirect": "/login"
+  },
+  "theme": {
+    "mode": "system",
+    "primaryColor": "#3b82f6",
+    "accentColor": "#8b5cf6",
+    "radius": "0.5rem",
+    "fontFamily": "Inter, sans-serif"
+  },
+  "sidebar": {
+    "collapsible": true,
+    "defaultOpen": true,
+    "items": [
+      {
+        "label": "Tasks",
+        "icon": "check-square",
+        "module": "tasks"
+      },
+      {
+        "label": "Users",
+        "icon": "users",
+        "module": "users"
+      }
+    ]
+  },
+  "modules": {
+    "tasks": {
+      "label": "Tasks",
+      "labelSingular": "Task",
+      "route": "tasks",
+      "icon": "check-square",
+      "api": {
+        "list": "get_tasks",
+        "create": "create_task",
+        "get": "get_task",
+        "update": "update_task",
+        "delete": "delete_task"
+      }
+    },
+    "users": {
+      "label": "Users",
+      "labelSingular": "User",
+      "route": "users",
+      "icon": "users",
+      "api": {
+        "list": "get_users",
+        "create": "create_user",
+        "get": "get_user",
+        "update": "update_user",
+        "delete": "delete_user"
+      }
+    }
+  }
+}

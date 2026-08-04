@@ -1,0 +1,88 @@
+<div class="w-full overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+        <tr>
+          @for (col of columns(); track col.field) {
+            <th scope="col" class="px-6 py-3.5 font-semibold">
+              {{ col.label }}
+            </th>
+          }
+          @if (rowActions().length > 0) {
+            <th scope="col" class="px-6 py-3.5 font-semibold text-right">Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border/60">
+        @if (isLoading()) {
+          <tr>
+            <td [attr.colspan]="columns().length + 1" class="p-8 text-center">
+              <app-loading-skeleton />
+            </td>
+          </tr>
+        } @else if (rows().length === 0) {
+          <tr>
+            <td [attr.colspan]="columns().length + 1" class="p-12 text-center text-muted-foreground">
+              No records found.
+            </td>
+          </tr>
+        } @else {
+          @for (row of rows(); track $index) {
+            <tr class="hover:bg-muted/30 transition-colors group">
+              @for (col of columns(); track col.field) {
+                <td class="px-6 py-4 whitespace-nowrap text-foreground font-normal">
+                  @if (col.badge) {
+                    <span [class]="getBadgeClass(col, String(getCellValue(row, col.field)))" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border">
+                      {{ getCellValue(row, col.field) }}
+                    </span>
+                  } @else {
+                    {{ getCellValue(row, col.field) }}
+                  }
+                </td>
+              }
+              @if (rowActions().length > 0) {
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                  <div class="flex items-center justify-end gap-1 opacity-90 group-hover:opacity-100">
+                    @if (rowActions().includes('view')) {
+                      <button 
+                        hlmBtn
+                        variant="ghost"
+                        size="icon"
+                        (click)="viewClicked.emit(String(row['id']))" 
+                        title="View Details"
+                      >
+                        <ng-icon name="heroEye" class="text-base text-muted-foreground hover:text-foreground" />
+                      </button>
+                    }
+                    @if (rowActions().includes('edit')) {
+                      <button 
+                        hlmBtn
+                        variant="ghost"
+                        size="icon"
+                        (click)="editClicked.emit(String(row['id']))" 
+                        title="Edit Record"
+                      >
+                        <ng-icon name="heroPencilSquare" class="text-base text-muted-foreground hover:text-primary" />
+                      </button>
+                    }
+                    @if (rowActions().includes('delete')) {
+                      <button 
+                        hlmBtn
+                        variant="ghost"
+                        size="icon"
+                        (click)="deleteClicked.emit(String(row['id']))" 
+                        title="Delete Record"
+                      >
+                        <ng-icon name="heroTrash" class="text-base text-muted-foreground hover:text-destructive" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
