@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "strict": true,
     "esModuleInterop": true,
@@ -10,22 +10,10 @@
     "declaration": true,
     "sourceMap": true,
     "resolveJsonModule": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "baseUrl": ".",
-    "paths": {
-      "@core/*": ["src/core/*"],
-      "@modules/*": ["src/modules/*"],
-      "@generated/*": ["src/generated/*"],
-      "@consumers/*": ["src/consumers/*"],
-      "@webhooks/*": ["src/webhooks/*"],
-      "@scheduled/*": ["src/scheduled/*"]
-    },
-    "types": ["@cloudflare/workers-types"]
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"]
   },
-  "include": ["src/**/*", "worker-configuration.d.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

@@ -15,14 +15,13 @@
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "baseUrl": ".",
     "paths": {
-      "@core/*": ["src/core/*"],
-      "@modules/*": ["src/modules/*"],
-      "@generated/*": ["src/generated/*"],
-      "@consumers/*": ["src/consumers/*"],
-      "@webhooks/*": ["src/webhooks/*"],
-      "@scheduled/*": ["src/scheduled/*"]
+      "@core/*": ["./src/core/*"],
+      "@modules/*": ["./src/modules/*"],
+      "@generated/*": ["./src/generated/*"],
+      "@consumers/*": ["./src/consumers/*"],
+      "@webhooks/*": ["./src/webhooks/*"],
+      "@scheduled/*": ["./src/scheduled/*"]
     },
     "types": ["@cloudflare/workers-types"]
   },
